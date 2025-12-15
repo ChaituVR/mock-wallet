@@ -1,0 +1,425 @@
+"use client"
+
+import { Core } from "@walletconnect/core"
+import { WalletKit, type WalletKitTypes } from "@reown/walletkit"
+import { buildApprovedNamespaces, getSdkError } from "@walletconnect/utils"
+import { ethers } from "ethers"
+
+export interface WCSession {
+  topic: string
+  peerMetadata: {
+    name: string
+    description: string
+    url: string
+    icons: string[]
+  }
+  namespaces: any
+  connectedAt: number
+}
+
+export interface WCProposal {
+  id: number
+  params: WalletKitTypes.SessionProposal["params"]
+}
+
+export interface WCRequest {
+  id: number
+  topic: string
+  method: string
+  params: any
+  chainId: string
+}
+
+// Parse WalletConnect URI to extract connection info
+export function parseWCUri(uri: string): { version: number; topic: string; relay: string; key: string } | null {
+  try {
+    if (!uri.startsWith("wc:")) return null
+
+    const withoutPrefix = uri.slice(3)
+    const [topicPart, paramsPart] = withoutPrefix.split("?")
+    const topic = topicPart.split("@")[0]
+    const version = Number.parseInt(topicPart.split("@")[1] || "2")
+
+    const params = new URLSearchParams(paramsPart)
+    const relay = params.get("relay-protocol") || "irn"
+    const key = params.get("symKey") || ""
+
+    return { version, topic, relay, key }
+  } catch {
+    return null
+  }
+}
+
+type EventCallback = (...args: any[]) => void
+
+export class WalletConnectManager {
+  private static instance: WalletConnectManager
+  private walletKit: InstanceType<typeof WalletKit> | null = null
+  private core: InstanceType<typeof Core> | null = null
+  private projectId = ""
+  private isInitialized = false
+  private isInitializing = false
+  private initPromise: Promise<void> | null = null
+  private listeners: Map<string, Set<EventCallback>> = new Map()
+  private pendingRequests: Map<number, WCRequest> = new Map()
+
+  static getInstance(): WalletConnectManager {
+    if (!WalletConnectManager.instance) {
+      WalletConnectManager.instance = new WalletConnectManager()
+    }
+    return WalletConnectManager.instance
+  }
+
+  async initialize(projectId: string): Promise<void> {
+    if (this.initPromise && this.projectId === projectId) {
+      return this.initPromise
+    }
+
+    if (this.isInitialized && this.projectId === projectId) {
+      return
+    }
+
+    if (this.isInitialized && this.projectId !== projectId) {
+      this.isInitialized = false
+      this.walletKit = null
+      this.core = null
+    }
+
+    this.projectId = projectId
+    this.isInitializing = true
+
+    this.initPromise = this._doInitialize(projectId)
+
+    try {
+      await this.initPromise
+    } finally {
+      this.isInitializing = false
+    }
+  }
+
+  private async _doInitialize(projectId: string): Promise<void> {
+    try {
+      console.log("[v0] Initializing WalletKit with projectId:", projectId.substring(0, 8) + "...")
+
+      this.core = new Core({
+        projectId,
+      })
+
+      console.log("[v0] Core created, initializing WalletKit...")
+
+      // Initialize WalletKit - this handles relay connection internally
+      this.walletKit = await WalletKit.init({
+        core: this.core,
+        metadata: {
+          name: "Reown Dev Wallet",
+          description: "Developer Test Wallet for Web3 dApps",
+          url: typeof window !== "undefined" ? window.location.origin : "https://reown-dev-wallet.vercel.app",
+          icons: ["https://avatars.githubusercontent.com/u/37784886"],
+        },
+      })
+
+      console.log("[v0] WalletKit instance created")
+
+      // Set up event listeners
+      this.setupEventListeners()
+
+      this.isInitialized = true
+      console.log("[v0] WalletKit fully initialized")
+    } catch (error) {
+      console.error("[v0] WalletKit initialization error:", error)
+      this.initPromise = null
+      throw error
+    }
+  }
+
+  private setupEventListeners(): void {
+    if (!this.walletKit) return
+
+    // Session proposal event
+    this.walletKit.on("session_proposal", (proposal: WalletKitTypes.SessionProposal) => {
+      console.log("[v0] Session proposal received:", proposal)
+      const wcProposal: WCProposal = {
+        id: proposal.id,
+        params: proposal.params,
+      }
+      this.emit("session_proposal", wcProposal)
+    })
+
+    // Session request event (for signing, transactions, etc.)
+    this.walletKit.on("session_request", (request: WalletKitTypes.SessionRequest) => {
+      console.log("[v0] Session request received:", request)
+      const wcRequest: WCRequest = {
+        id: request.id,
+        topic: request.topic,
+        method: request.params.request.method,
+        params: request.params.request.params,
+        chainId: request.params.chainId,
+      }
+      this.pendingRequests.set(request.id, wcRequest)
+      this.emit("session_request", wcRequest)
+    })
+
+    // Session delete event
+    this.walletKit.on("session_delete", (event: { topic: string }) => {
+      console.log("[v0] Session deleted:", event)
+      this.emit("session_delete", event)
+    })
+  }
+
+  async pair(uri: string): Promise<void> {
+    if (!this.isInitialized) {
+      if (this.initPromise) {
+        console.log("[v0] Waiting for initialization to complete before pairing...")
+        await this.initPromise
+      } else {
+        throw new Error("WalletKit not initialized. Please set your Project ID first.")
+      }
+    }
+
+    if (!this.walletKit) {
+      throw new Error("WalletKit not initialized")
+    }
+
+    const parsed = parseWCUri(uri)
+    if (!parsed) {
+      throw new Error("Invalid WalletConnect URI format. Must start with 'wc:'")
+    }
+
+    console.log("[v0] Pairing with URI topic:", parsed.topic)
+
+    try {
+      let lastError: Error | null = null
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          console.log("[v0] Pairing attempt", attempt)
+          await this.walletKit.pair({ uri })
+          console.log("[v0] Pairing successful, waiting for session proposal...")
+          return
+        } catch (error) {
+          lastError = error as Error
+          console.error(`[v0] Pairing attempt ${attempt} failed:`, error)
+          if (attempt < 3) {
+            await new Promise((resolve) => setTimeout(resolve, 1000 * attempt))
+          }
+        }
+      }
+      throw lastError || new Error("Failed to pair after 3 attempts")
+    } catch (error) {
+      console.error("[v0] Pairing error:", error)
+      throw error
+    }
+  }
+
+  async approveSession(proposal: WCProposal, account: string, chainId: number): Promise<void> {
+    if (!this.walletKit) {
+      throw new Error("WalletKit not initialized")
+    }
+
+    try {
+      // Build approved namespaces using the utility
+      const approvedNamespaces = buildApprovedNamespaces({
+        proposal: proposal.params,
+        supportedNamespaces: {
+          eip155: {
+            chains: [
+              `eip155:${chainId}`,
+              "eip155:1",
+              "eip155:11155111",
+              "eip155:137",
+              "eip155:80002",
+              "eip155:8453",
+              "eip155:84532",
+              "eip155:42161",
+              "eip155:421614",
+              "eip155:10",
+              "eip155:11155420",
+            ],
+            methods: [
+              "eth_sendTransaction",
+              "eth_signTransaction",
+              "eth_sign",
+              "personal_sign",
+              "eth_signTypedData",
+              "eth_signTypedData_v3",
+              "eth_signTypedData_v4",
+              "wallet_switchEthereumChain",
+              "wallet_addEthereumChain",
+            ],
+            events: ["chainChanged", "accountsChanged"],
+            accounts: [
+              `eip155:${chainId}:${account}`,
+              `eip155:1:${account}`,
+              `eip155:11155111:${account}`,
+              `eip155:137:${account}`,
+              `eip155:80002:${account}`,
+              `eip155:8453:${account}`,
+              `eip155:84532:${account}`,
+              `eip155:42161:${account}`,
+              `eip155:421614:${account}`,
+              `eip155:10:${account}`,
+              `eip155:11155420:${account}`,
+            ],
+          },
+        },
+      })
+
+      console.log("[v0] Approving session with namespaces:", approvedNamespaces)
+
+      const session = await this.walletKit.approveSession({
+        id: proposal.id,
+        namespaces: approvedNamespaces,
+      })
+
+      console.log("[v0] Session approved:", session)
+      this.emit("session_update", session)
+    } catch (error) {
+      console.error("[v0] Session approval error:", error)
+      throw error
+    }
+  }
+
+  async rejectSession(proposalId: number): Promise<void> {
+    if (!this.walletKit) {
+      throw new Error("WalletKit not initialized")
+    }
+
+    try {
+      await this.walletKit.rejectSession({
+        id: proposalId,
+        reason: getSdkError("USER_REJECTED"),
+      })
+      console.log("[v0] Session rejected")
+      this.emit("session_rejected", { id: proposalId })
+    } catch (error) {
+      console.error("[v0] Session rejection error:", error)
+      throw error
+    }
+  }
+
+  async respondToRequest(
+    requestId: number,
+    response: { result?: any; error?: { code: number; message: string } },
+  ): Promise<void> {
+    if (!this.walletKit) {
+      throw new Error("WalletKit not initialized")
+    }
+
+    const request = this.pendingRequests.get(requestId)
+    if (!request) {
+      throw new Error("Request not found")
+    }
+
+    try {
+      if (response.error) {
+        await this.walletKit.respondSessionRequest({
+          topic: request.topic,
+          response: {
+            id: requestId,
+            jsonrpc: "2.0",
+            error: response.error,
+          },
+        })
+      } else {
+        await this.walletKit.respondSessionRequest({
+          topic: request.topic,
+          response: {
+            id: requestId,
+            jsonrpc: "2.0",
+            result: response.result,
+          },
+        })
+      }
+
+      this.pendingRequests.delete(requestId)
+      console.log("[v0] Request response sent")
+    } catch (error) {
+      console.error("[v0] Response error:", error)
+      throw error
+    }
+  }
+
+  async signMessage(message: string, privateKey: string): Promise<string> {
+    const wallet = new ethers.Wallet(privateKey)
+    return wallet.signMessage(message)
+  }
+
+  async signTypedData(domain: any, types: any, value: any, privateKey: string): Promise<string> {
+    const wallet = new ethers.Wallet(privateKey)
+    return wallet.signTypedData(domain, types, value)
+  }
+
+  async sendTransaction(tx: any, privateKey: string, rpcUrl: string): Promise<string> {
+    const provider = new ethers.JsonRpcProvider(rpcUrl)
+    const wallet = new ethers.Wallet(privateKey, provider)
+    const transaction = await wallet.sendTransaction(tx)
+    return transaction.hash
+  }
+
+  async disconnectSession(topic: string): Promise<void> {
+    if (!this.walletKit) {
+      throw new Error("WalletKit not initialized")
+    }
+
+    try {
+      await this.walletKit.disconnectSession({
+        topic,
+        reason: getSdkError("USER_DISCONNECTED"),
+      })
+      console.log("[v0] Session disconnected")
+      this.emit("session_delete", { topic })
+    } catch (error) {
+      console.error("[v0] Disconnect error:", error)
+      throw error
+    }
+  }
+
+  getActiveSessions(): Record<string, WCSession> {
+    if (!this.walletKit) return {}
+
+    try {
+      const sessions = this.walletKit.getActiveSessions()
+      const result: Record<string, WCSession> = {}
+
+      Object.entries(sessions).forEach(([topic, session]) => {
+        result[topic] = {
+          topic,
+          peerMetadata: session.peer.metadata,
+          namespaces: session.namespaces,
+          connectedAt: Date.now(),
+        }
+      })
+
+      return result
+    } catch (error) {
+      console.error("[v0] Get sessions error:", error)
+      return {}
+    }
+  }
+
+  getPendingRequests(): WCRequest[] {
+    return Array.from(this.pendingRequests.values())
+  }
+
+  on(event: string, callback: EventCallback): void {
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, new Set())
+    }
+    this.listeners.get(event)!.add(callback)
+  }
+
+  off(event: string, callback: EventCallback): void {
+    this.listeners.get(event)?.delete(callback)
+  }
+
+  private emit(event: string, data: any): void {
+    this.listeners.get(event)?.forEach((cb) => cb(data))
+  }
+
+  isReady(): boolean {
+    return this.isInitialized
+  }
+
+  getProjectId(): string {
+    return this.projectId
+  }
+}
