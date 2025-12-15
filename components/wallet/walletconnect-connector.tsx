@@ -17,11 +17,11 @@ import {
   type WCRequest,
   parseWCUri,
 } from "@/lib/walletconnect/wc-manager"
-import { Link2, Unlink, AlertCircle, CheckCircle2, Loader2, ExternalLink, Scan, Settings, Eye } from "lucide-react"
+import { Link2, Unlink, AlertCircle, CheckCircle2, Loader2, ExternalLink, Scan, Settings, Eye, Bot } from "lucide-react"
 import { SUPPORTED_CHAINS } from "@/lib/wallet/chain-config"
 
 export function WalletConnectConnector() {
-  const { activeAccount, chainId, projectId } = useWallet()
+  const { activeAccount, chainId, projectId, agentMode } = useWallet()
   const [wcUri, setWcUri] = useState("")
   const [isConnecting, setIsConnecting] = useState(false)
   const [isInitializing, setIsInitializing] = useState(false)
@@ -36,6 +36,33 @@ export function WalletConnectConnector() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [initStatus, setInitStatus] = useState<"idle" | "initializing" | "ready" | "error">("idle")
   const initRef = useRef(false)
+  const agentModeRef = useRef(agentMode)
+  const activeAccountRef = useRef(activeAccount)
+  const chainIdRef = useRef(chainId)
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    agentModeRef.current = agentMode
+  }, [agentMode])
+
+  useEffect(() => {
+    activeAccountRef.current = activeAccount
+  }, [activeAccount])
+
+  useEffect(() => {
+    chainIdRef.current = chainId
+  }, [chainId])
+
+  // Auto-connect when WC URI is pasted in agent mode
+  useEffect(() => {
+    if (agentMode && wcUri.trim() && activeAccount && initStatus === "ready" && !isConnecting) {
+      const parsed = parseWCUri(wcUri)
+      if (parsed) {
+        console.log("[v0] Agent mode: auto-connecting with pasted URI...")
+        handleConnect()
+      }
+    }
+  }, [wcUri, agentMode])
 
   const refreshSessions = useCallback(() => {
     const activeSessions = wcManager.getActiveSessions()
@@ -94,14 +121,85 @@ export function WalletConnectConnector() {
     }
   }
 
-  const handleSessionProposal = (proposal: WCProposal) => {
+  const handleSessionProposal = async (proposal: WCProposal) => {
     console.log("[v0] Received session proposal in UI:", proposal)
+    const currentAccount = activeAccountRef.current
+    const currentChainId = chainIdRef.current
+    
+    // Auto-approve in agent mode
+    if (agentModeRef.current && currentAccount && !currentAccount.isWatchOnly) {
+      console.log("[v0] Agent mode enabled, auto-approving session...")
+      try {
+        await wcManager.approveSession(proposal, currentAccount.address, currentChainId)
+        refreshSessions()
+        console.log("[v0] Session auto-approved in agent mode")
+        return
+      } catch (err) {
+        console.error("[v0] Auto-approve error:", err)
+        // Fall back to manual approval on error
+      }
+    }
+    
     setPendingProposal(proposal)
     setShowSessionDialog(true)
   }
 
-  const handleSessionRequest = (request: WCRequest) => {
+  const handleSessionRequest = async (request: WCRequest) => {
     console.log("[v0] Received session request in UI:", request)
+    const currentAccount = activeAccountRef.current
+    const currentChainId = chainIdRef.current
+    
+    // Auto-approve in agent mode
+    if (agentModeRef.current && currentAccount && !currentAccount.isWatchOnly && currentAccount.privateKey) {
+      console.log("[v0] Agent mode enabled, auto-processing request...")
+      try {
+        const currentChain = SUPPORTED_CHAINS.find((c) => c.id === currentChainId)
+        const rpcUrl = currentChain?.rpcUrl || "https://1rpc.io/sepolia"
+        let result: string
+
+        switch (request.method) {
+          case "personal_sign": {
+            const message = request.params[0]
+            const messageStr = message.startsWith("0x") ? Buffer.from(message.slice(2), "hex").toString("utf8") : message
+            result = await wcManager.signMessage(messageStr, currentAccount.privateKey)
+            break
+          }
+          case "eth_sign": {
+            const message = request.params[1]
+            result = await wcManager.signMessage(message, currentAccount.privateKey)
+            break
+          }
+          case "eth_signTypedData":
+          case "eth_signTypedData_v3":
+          case "eth_signTypedData_v4": {
+            const typedData = JSON.parse(request.params[1])
+            const { domain, types, message: value } = typedData
+            const { EIP712Domain, ...restTypes } = types
+            result = await wcManager.signTypedData(domain, restTypes, value, currentAccount.privateKey)
+            break
+          }
+          case "eth_sendTransaction": {
+            const tx = request.params[0]
+            result = await wcManager.sendTransaction(tx, currentAccount.privateKey, rpcUrl)
+            break
+          }
+          default:
+            console.log("[v0] Unsupported method for auto-sign:", request.method)
+            // Fall back to manual for unsupported methods
+            setPendingRequest(request)
+            setShowRequestDialog(true)
+            return
+        }
+
+        await wcManager.respondToRequest(request.id, { result })
+        console.log("[v0] Request auto-processed in agent mode")
+        return
+      } catch (err) {
+        console.error("[v0] Auto-process error:", err)
+        // Fall back to manual approval on error
+      }
+    }
+    
     setPendingRequest(request)
     setShowRequestDialog(true)
   }

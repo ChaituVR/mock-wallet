@@ -14,6 +14,8 @@ interface WalletContextType {
   chainId: number
   isConnected: boolean
   projectId: string
+  agentMode: boolean
+  setAgentMode: (enabled: boolean) => void
   createNewWallet: () => void
   importWallet: (privateKeyOrMnemonicOrAddress: string) => void
   addWallet: (privateKeyOrMnemonicOrAddress: string) => void
@@ -37,6 +39,7 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
   const [chainId, setChainId] = useState(11155111)
   const [projectId, setProjectIdState] = useState("")
   const [hasCheckedUrl, setHasCheckedUrl] = useState(false)
+  const [agentMode, setAgentModeState] = useState(false)
 
   const activeAccount = accounts[activeAccountIndex] || null
 
@@ -69,6 +72,8 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
         WalletManager.setActiveAccountIndex(0)
         setAccounts(newAccounts)
         setActiveAccountIndex(0)
+        // Enable agent mode when importing from URL with private key
+        setAgentModeState(true)
         // Clean URL after import for security
         if (typeof window !== "undefined") {
           window.history.replaceState({}, "", window.location.pathname)
@@ -277,6 +282,10 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
     localStorage.setItem("reown_project_id", id)
   }
 
+  const setAgentMode = (enabled: boolean) => {
+    setAgentModeState(enabled)
+  }
+
   return (
     <WalletContext.Provider
       value={{
@@ -287,6 +296,8 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
         chainId,
         isConnected: !!activeAccount,
         projectId,
+        agentMode,
+        setAgentMode,
         createNewWallet,
         importWallet,
         addWallet,
