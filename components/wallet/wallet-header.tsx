@@ -2,6 +2,7 @@
 
 import { Hexagon } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { AccountSwitcher } from "./account-switcher"
 
 export function WalletHeader() {
   return (
@@ -13,16 +14,13 @@ export function WalletHeader() {
               <Hexagon className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-lg font-black tracking-tight uppercase">Reown Dev Wallet</h1>
+              <h1 className="text-lg font-black tracking-tight uppercase">mockwallet.dev</h1>
               <p className="text-xs font-mono font-bold text-muted-foreground">Web3 Testing</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-success text-success-foreground text-xs font-black uppercase border-2 border-border rotate-slight">
-              <div className="w-2 h-2 bg-current animate-pulse" />
-              Connected
-            </div>
+            <AccountSwitcher />
           </div>
         </div>
       </div>

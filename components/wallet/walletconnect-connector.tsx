@@ -17,11 +17,11 @@ import {
   type WCRequest,
   parseWCUri,
 } from "@/lib/walletconnect/wc-manager"
-import { Link2, Unlink, AlertCircle, CheckCircle2, Loader2, ExternalLink, Scan } from "lucide-react"
+import { Link2, Unlink, AlertCircle, CheckCircle2, Loader2, ExternalLink, Scan, Settings, Eye } from "lucide-react"
 import { SUPPORTED_CHAINS } from "@/lib/wallet/chain-config"
 
 export function WalletConnectConnector() {
-  const { account, chainId, projectId } = useWallet()
+  const { activeAccount, chainId, projectId } = useWallet()
   const [wcUri, setWcUri] = useState("")
   const [isConnecting, setIsConnecting] = useState(false)
   const [isInitializing, setIsInitializing] = useState(false)
@@ -42,14 +42,14 @@ export function WalletConnectConnector() {
   }, [wcManager])
 
   useEffect(() => {
-    if (projectId && account && !initRef.current) {
+    if (projectId && activeAccount && !initRef.current) {
       initRef.current = true
       initializeWC()
     }
-  }, [projectId, account])
+  }, [projectId, activeAccount])
 
   useEffect(() => {
-    if (projectId && account && initRef.current) {
+    if (projectId && activeAccount && initRef.current) {
       initializeWC()
     }
   }, [projectId])
@@ -106,7 +106,7 @@ export function WalletConnectConnector() {
   }
 
   const handleConnect = async () => {
-    if (!wcUri.trim() || !account) return
+    if (!wcUri.trim() || !activeAccount) return
 
     setIsConnecting(true)
     setError("")
@@ -130,11 +130,11 @@ export function WalletConnectConnector() {
   }
 
   const handleApprove = async () => {
-    if (!pendingProposal || !account) return
+    if (!pendingProposal || !activeAccount) return
 
     setIsProcessing(true)
     try {
-      await wcManager.approveSession(pendingProposal, account.address, chainId)
+      await wcManager.approveSession(pendingProposal, activeAccount.address, chainId)
       setShowSessionDialog(false)
       setPendingProposal(null)
       refreshSessions()
@@ -162,7 +162,17 @@ export function WalletConnectConnector() {
   }
 
   const handleRequestApprove = async () => {
-    if (!pendingRequest || !account) return
+    if (!pendingRequest || !activeAccount) return
+
+    if (activeAccount.isWatchOnly) {
+      setError("Cannot sign requests from a watch-only account")
+      return
+    }
+
+    if (!activeAccount.privateKey) {
+      setError("Private key not available")
+      return
+    }
 
     setIsProcessing(true)
     try {
@@ -174,12 +184,12 @@ export function WalletConnectConnector() {
         case "personal_sign": {
           const message = pendingRequest.params[0]
           const messageStr = message.startsWith("0x") ? Buffer.from(message.slice(2), "hex").toString("utf8") : message
-          result = await wcManager.signMessage(messageStr, account.privateKey)
+          result = await wcManager.signMessage(messageStr, activeAccount.privateKey)
           break
         }
         case "eth_sign": {
           const message = pendingRequest.params[1]
-          result = await wcManager.signMessage(message, account.privateKey)
+          result = await wcManager.signMessage(message, activeAccount.privateKey)
           break
         }
         case "eth_signTypedData":
@@ -188,12 +198,12 @@ export function WalletConnectConnector() {
           const typedData = JSON.parse(pendingRequest.params[1])
           const { domain, types, message: value } = typedData
           const { EIP712Domain, ...restTypes } = types
-          result = await wcManager.signTypedData(domain, restTypes, value, account.privateKey)
+          result = await wcManager.signTypedData(domain, restTypes, value, activeAccount.privateKey)
           break
         }
         case "eth_sendTransaction": {
           const tx = pendingRequest.params[0]
-          result = await wcManager.sendTransaction(tx, account.privateKey, rpcUrl)
+          result = await wcManager.sendTransaction(tx, activeAccount.privateKey, rpcUrl)
           break
         }
         default:
@@ -255,40 +265,56 @@ export function WalletConnectConnector() {
     }
   }
 
+  const isWatchOnly = activeAccount?.isWatchOnly
+
   return (
     <>
-      <Card className="border-[3px] border-foreground shadow-brutal">
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between font-mono uppercase tracking-tighter">
-            <span className="flex items-center gap-2">
-              <Link2 className="h-5 w-5" />
-              WalletConnect
-            </span>
+      <Card className="brutalist-border bg-card">
+        <CardHeader className="pb-3 border-b-[3px] border-foreground">
+          <CardTitle className="flex items-center justify-between text-xl font-black uppercase">
             <div className="flex items-center gap-2">
-              {initStatus === "initializing" && (
-                <Badge className="bg-[#ffff00] text-black border-2 border-foreground font-mono text-xs">
-                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                  INIT
-                </Badge>
-              )}
-              {initStatus === "ready" && (
-                <Badge className="bg-[#00ff00] text-black border-2 border-foreground font-mono text-xs">READY</Badge>
-              )}
-              {sessionCount > 0 && (
-                <Badge className="bg-foreground text-background border-2 border-foreground font-mono">
-                  {sessionCount} LIVE
-                </Badge>
-              )}
+              <Link2 className="h-5 w-5" />
+              WALLETCONNECT
             </div>
+            {initStatus === "ready" && (
+              <Badge variant="outline" className="border-[2px] border-success text-success font-mono text-xs">
+                READY
+              </Badge>
+            )}
+            {initStatus === "initializing" && (
+              <Badge variant="outline" className="border-[2px] border-warning text-warning font-mono text-xs">
+                INIT
+              </Badge>
+            )}
           </CardTitle>
-          <CardDescription className="font-mono text-xs">CONNECT TO ANY DAPP VIA REOWN PROTOCOL</CardDescription>
+          <CardDescription className="font-mono font-bold">Connect to any Web3 dApp</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-4">
+          {isWatchOnly && (
+            <Alert className="border-[3px] border-foreground bg-warning/20">
+              <Eye className="h-4 w-4" />
+              <AlertDescription className="font-mono text-xs font-bold">
+                WATCH-ONLY ACCOUNTS CANNOT SIGN TRANSACTIONS OR MESSAGES VIA WALLETCONNECT
+              </AlertDescription>
+            </Alert>
+          )}
+
           {!projectId ? (
-            <Alert className="border-[3px] border-foreground bg-[#ff3333]/20">
+            <Alert className="border-[3px] border-foreground bg-warning/20">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="font-mono text-xs">
-                ADD YOUR REOWN PROJECT ID IN SETTINGS TO ENABLE WALLETCONNECT
+              <AlertDescription className="space-y-3">
+                <p className="font-mono text-xs font-bold">Reown Project ID required for WalletConnect</p>
+                <Button
+                  onClick={() => {
+                    const settingsBtn = document.querySelector("[data-settings-toggle]") as HTMLButtonElement
+                    if (settingsBtn) settingsBtn.click()
+                  }}
+                  size="sm"
+                  className="w-full border-[2px] border-foreground font-black uppercase"
+                >
+                  <Settings className="w-3 h-3 mr-2" />
+                  Add Project ID
+                </Button>
               </AlertDescription>
             </Alert>
           ) : (
@@ -304,11 +330,11 @@ export function WalletConnectConnector() {
                     value={wcUri}
                     onChange={(e) => setWcUri(e.target.value)}
                     className="font-mono text-sm border-[3px] border-foreground"
-                    disabled={isConnecting || initStatus !== "ready"}
+                    disabled={isConnecting || initStatus !== "ready" || isWatchOnly}
                   />
                   <Button
                     onClick={handleConnect}
-                    disabled={!wcUri.trim() || isConnecting || initStatus !== "ready"}
+                    disabled={!wcUri.trim() || isConnecting || initStatus !== "ready" || isWatchOnly}
                     className="px-6 bg-foreground text-background border-[3px] border-foreground font-mono uppercase hover:bg-background hover:text-foreground"
                   >
                     {isConnecting ? <Loader2 className="h-4 w-4 animate-spin" /> : "PAIR"}
@@ -489,6 +515,15 @@ export function WalletConnectConnector() {
 
           {pendingRequest && (
             <div className="space-y-4">
+              {isWatchOnly && (
+                <Alert className="border-[3px] border-foreground bg-[#ff3333]/20">
+                  <Eye className="h-4 w-4" />
+                  <AlertDescription className="font-mono text-xs">
+                    CANNOT PROCESS REQUEST: WATCH-ONLY ACCOUNT
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <div className="p-4 border-[3px] border-foreground bg-muted font-mono text-xs overflow-auto max-h-[200px]">
                 <pre className="whitespace-pre-wrap break-all">{formatRequestParams(pendingRequest)}</pre>
               </div>
@@ -511,8 +546,8 @@ export function WalletConnectConnector() {
                 </Button>
                 <Button
                   onClick={handleRequestApprove}
-                  disabled={isProcessing}
-                  className="flex-1 bg-[#00ff00] text-black border-[3px] border-foreground font-mono uppercase hover:bg-[#00cc00]"
+                  disabled={isProcessing || isWatchOnly}
+                  className="flex-1 bg-[#00ff00] text-black border-[3px] border-foreground font-mono uppercase hover:bg-[#00cc00] disabled:opacity-50"
                 >
                   {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : "APPROVE"}
                 </Button>

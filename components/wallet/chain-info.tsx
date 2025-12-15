@@ -64,9 +64,10 @@ export function ChainInfo() {
 
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Network Type</span>
+            {/* Changed testnet badge from border-warning to border-black */}
             <Badge
               variant={chain.testnet ? "secondary" : "default"}
-              className={chain.testnet ? "border-warning text-warning" : ""}
+              className={chain.testnet ? "border-2 border-black" : ""}
             >
               {chain.testnet ? "Testnet" : "Mainnet"}
             </Badge>

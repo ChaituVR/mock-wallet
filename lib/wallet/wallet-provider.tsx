@@ -7,29 +7,37 @@ import { getChainRpcUrl } from "./chain-config"
 import { useSearchParams } from "next/navigation"
 
 interface WalletContextType {
-  account: WalletAccount | null
+  accounts: WalletAccount[]
+  activeAccount: WalletAccount | null
+  activeAccountIndex: number
   balance: string
   chainId: number
   isConnected: boolean
   projectId: string
   createNewWallet: () => void
-  importWallet: (privateKeyOrMnemonic: string) => void
+  importWallet: (privateKeyOrMnemonicOrAddress: string) => void
+  addAccountFromSeed: () => void
+  switchAccount: (index: number) => void
   disconnectWallet: () => void
   switchChain: (chainId: number) => Promise<void>
   setProjectId: (id: string) => void
   getProvider: () => ethers.JsonRpcProvider | null
   refreshBalance: () => Promise<void>
+  getAccountBalance: (address: string) => Promise<string>
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined)
 
 function WalletProviderInner({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams()
-  const [account, setAccount] = useState<WalletAccount | null>(null)
+  const [accounts, setAccounts] = useState<WalletAccount[]>([])
+  const [activeAccountIndex, setActiveAccountIndex] = useState(0)
   const [balance, setBalance] = useState("0.0")
   const [chainId, setChainId] = useState(11155111)
   const [projectId, setProjectIdState] = useState("")
   const [hasCheckedUrl, setHasCheckedUrl] = useState(false)
+
+  const activeAccount = accounts[activeAccountIndex] || null
 
   useEffect(() => {
     if (hasCheckedUrl) return
@@ -55,8 +63,11 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
     if (urlPrivateKey) {
       try {
         const wallet = WalletManager.importFromPrivateKey(urlPrivateKey)
-        WalletManager.saveWallet(wallet)
-        setAccount(wallet)
+        const newAccounts = [wallet]
+        WalletManager.saveAccounts(newAccounts)
+        WalletManager.setActiveAccountIndex(0)
+        setAccounts(newAccounts)
+        setActiveAccountIndex(0)
         // Clean URL after import for security
         if (typeof window !== "undefined") {
           window.history.replaceState({}, "", window.location.pathname)
@@ -67,10 +78,11 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
       }
     }
 
-    // Load from localStorage if no URL params
-    const savedWallet = WalletManager.loadWallet()
-    if (savedWallet) {
-      setAccount(savedWallet)
+    const savedAccounts = WalletManager.loadAccounts()
+    if (savedAccounts.length > 0) {
+      setAccounts(savedAccounts)
+      const savedIndex = WalletManager.getActiveAccountIndex()
+      setActiveAccountIndex(Math.min(savedIndex, savedAccounts.length - 1))
     }
 
     const savedChainId = localStorage.getItem("selected_chain_id")
@@ -85,10 +97,16 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
   }, [searchParams, hasCheckedUrl])
 
   useEffect(() => {
-    if (account) {
-      refreshBalance()
+    if (activeAccount) {
+      ;(async () => {
+        try {
+          await refreshBalance()
+        } catch (error) {
+          console.error("[v0] Error refreshing balance in effect:", error)
+        }
+      })()
     }
-  }, [account, chainId, projectId])
+  }, [activeAccount, chainId, projectId])
 
   const getProvider = (): ethers.JsonRpcProvider | null => {
     const rpcUrl = getChainRpcUrl(chainId, projectId)
@@ -97,7 +115,7 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
   }
 
   const refreshBalance = async () => {
-    if (!account) return
+    if (!activeAccount) return
 
     try {
       const provider = getProvider()
@@ -106,7 +124,7 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
         return
       }
 
-      const balanceWei = await provider.getBalance(account.address)
+      const balanceWei = await provider.getBalance(activeAccount.address)
       const balanceEth = ethers.formatEther(balanceWei)
       setBalance(Number.parseFloat(balanceEth).toFixed(4))
     } catch (error) {
@@ -115,34 +133,84 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
     }
   }
 
-  const createNewWallet = () => {
-    const newWallet = WalletManager.createWallet()
-    WalletManager.saveWallet(newWallet)
-    setAccount(newWallet)
+  const getAccountBalance = async (address: string): Promise<string> => {
+    try {
+      const provider = getProvider()
+      if (!provider) return "0.0"
+
+      const balanceWei = await provider.getBalance(address)
+      const balanceEth = ethers.formatEther(balanceWei)
+      return Number.parseFloat(balanceEth).toFixed(4)
+    } catch (error) {
+      return "0.0"
+    }
   }
 
-  const importWallet = (privateKeyOrMnemonic: string) => {
+  const createNewWallet = () => {
+    const newWallet = WalletManager.createWallet(0)
+    const newAccounts = [newWallet]
+    WalletManager.saveAccounts(newAccounts)
+    WalletManager.setActiveAccountIndex(0)
+    setAccounts(newAccounts)
+    setActiveAccountIndex(0)
+  }
+
+  const importWallet = (privateKeyOrMnemonicOrAddress: string) => {
     try {
       let wallet: WalletAccount
+      const input = privateKeyOrMnemonicOrAddress.trim()
 
-      const words = privateKeyOrMnemonic.trim().split(/\s+/)
-      if (words.length === 12 || words.length === 24) {
-        wallet = WalletManager.importFromMnemonic(privateKeyOrMnemonic)
+      // Check if it's an Ethereum address (watch-only)
+      if (ethers.isAddress(input)) {
+        wallet = WalletManager.createWatchOnly(input)
       } else {
-        wallet = WalletManager.importFromPrivateKey(privateKeyOrMnemonic)
+        // Check if mnemonic or private key
+        const words = input.split(/\s+/)
+        if (words.length === 12 || words.length === 24) {
+          wallet = WalletManager.importFromMnemonic(input, 0)
+        } else {
+          wallet = WalletManager.importFromPrivateKey(input)
+        }
       }
 
-      WalletManager.saveWallet(wallet)
-      setAccount(wallet)
+      const newAccounts = [wallet]
+      WalletManager.saveAccounts(newAccounts)
+      WalletManager.setActiveAccountIndex(0)
+      setAccounts(newAccounts)
+      setActiveAccountIndex(0)
     } catch (error) {
       console.error("[v0] Error importing wallet:", error)
-      throw new Error("Invalid private key or mnemonic phrase")
+      throw new Error("Invalid private key, mnemonic phrase, or Ethereum address")
+    }
+  }
+
+  const addAccountFromSeed = () => {
+    if (accounts.length === 0 || !activeAccount?.mnemonic) {
+      throw new Error("No seed phrase available")
+    }
+
+    const mnemonic = activeAccount.mnemonic
+    const nextIndex = accounts.filter((a) => a.mnemonic === mnemonic).length
+    const newAccount = WalletManager.importFromMnemonic(mnemonic, nextIndex)
+
+    const newAccounts = [...accounts, newAccount]
+    WalletManager.saveAccounts(newAccounts)
+    WalletManager.setActiveAccountIndex(newAccounts.length - 1)
+    setAccounts(newAccounts)
+    setActiveAccountIndex(newAccounts.length - 1)
+  }
+
+  const switchAccount = (index: number) => {
+    if (index >= 0 && index < accounts.length) {
+      WalletManager.setActiveAccountIndex(index)
+      setActiveAccountIndex(index)
     }
   }
 
   const disconnectWallet = () => {
-    WalletManager.clearWallet()
-    setAccount(null)
+    WalletManager.clearAllAccounts()
+    setAccounts([])
+    setActiveAccountIndex(0)
     setBalance("0.0")
   }
 
@@ -160,18 +228,23 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
   return (
     <WalletContext.Provider
       value={{
-        account,
+        accounts,
+        activeAccount,
+        activeAccountIndex,
         balance,
         chainId,
-        isConnected: !!account,
+        isConnected: !!activeAccount,
         projectId,
         createNewWallet,
         importWallet,
+        addAccountFromSeed,
+        switchAccount,
         disconnectWallet,
         switchChain,
         setProjectId,
         getProvider,
         refreshBalance,
+        getAccountBalance,
       }}
     >
       {children}

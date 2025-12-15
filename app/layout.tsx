@@ -12,9 +12,9 @@ const _spaceGrotesk = Space_Grotesk({
 const _jetbrains = JetBrains_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Reown Dev Wallet | Web3 Testing Sandbox",
+  title: "mockwallet.dev | Web3 Developer Testing Wallet",
   description:
-    "The ultimate Web3 test wallet for developers. Test transactions on Sepolia and other testnets. Connect to any dApp via WalletConnect. Auto-import via URL for seamless testing.",
+    "The ultimate Web3 test wallet for developers. Multi-account support, watch-only addresses, test transactions on any testnet. Connect to dApps via WalletConnect. Auto-import via URL.",
   keywords: ["web3", "wallet", "test", "sepolia", "ethereum", "walletconnect", "reown", "developer", "sandbox"],
     generator: 'v0.app'
 }

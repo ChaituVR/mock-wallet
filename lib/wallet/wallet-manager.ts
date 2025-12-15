@@ -4,19 +4,25 @@ import { ethers } from "ethers"
 
 export interface WalletAccount {
   address: string
-  privateKey: string
+  privateKey?: string
   mnemonic?: string
+  isWatchOnly?: boolean
+  derivationIndex?: number
+  label?: string
 }
 
 export class WalletManager {
-  private static STORAGE_KEY = "reown_test_wallet"
+  private static STORAGE_KEY = "mockwallet_accounts"
+  private static ACTIVE_ACCOUNT_KEY = "mockwallet_active_account"
 
-  static createWallet(): WalletAccount {
+  static createWallet(derivationIndex = 0): WalletAccount {
     const wallet = ethers.Wallet.createRandom()
     return {
       address: wallet.address,
       privateKey: wallet.privateKey,
       mnemonic: wallet.mnemonic?.phrase,
+      derivationIndex,
+      label: `Account ${derivationIndex + 1}`,
     }
   }
 
@@ -25,37 +31,67 @@ export class WalletManager {
     return {
       address: wallet.address,
       privateKey: wallet.privateKey,
+      label: "Imported Account",
     }
   }
 
-  static importFromMnemonic(mnemonic: string): WalletAccount {
-    const wallet = ethers.Wallet.fromPhrase(mnemonic)
+  static importFromMnemonic(mnemonic: string, derivationIndex = 0): WalletAccount {
+    const path = `m/44'/60'/0'/0/${derivationIndex}`
+    const wallet = ethers.HDNodeWallet.fromPhrase(mnemonic, undefined, path)
     return {
       address: wallet.address,
       privateKey: wallet.privateKey,
-      mnemonic: wallet.mnemonic?.phrase,
+      mnemonic: mnemonic,
+      derivationIndex,
+      label: `Account ${derivationIndex + 1}`,
     }
   }
 
-  static saveWallet(wallet: WalletAccount) {
+  static createWatchOnly(address: string): WalletAccount {
+    if (!ethers.isAddress(address)) {
+      throw new Error("Invalid Ethereum address")
+    }
+    return {
+      address,
+      isWatchOnly: true,
+      label: "Watch Only",
+    }
+  }
+
+  static saveAccounts(accounts: WalletAccount[]) {
     if (typeof window !== "undefined") {
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(wallet))
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(accounts))
     }
   }
 
-  static loadWallet(): WalletAccount | null {
+  static loadAccounts(): WalletAccount[] {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem(this.STORAGE_KEY)
       if (stored) {
         return JSON.parse(stored)
       }
     }
-    return null
+    return []
   }
 
-  static clearWallet() {
+  static setActiveAccountIndex(index: number) {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(this.ACTIVE_ACCOUNT_KEY, index.toString())
+    }
+  }
+
+  static getActiveAccountIndex(): number {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem(this.ACTIVE_ACCOUNT_KEY)
+      return stored ? Number.parseInt(stored) : 0
+    }
+    return 0
+  }
+
+  static clearAllAccounts() {
     if (typeof window !== "undefined") {
       localStorage.removeItem(this.STORAGE_KEY)
+      localStorage.removeItem(this.ACTIVE_ACCOUNT_KEY)
     }
   }
 

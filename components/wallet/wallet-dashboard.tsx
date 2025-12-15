@@ -65,7 +65,7 @@ export function WalletDashboard() {
         <WalletHeader />
 
         <main className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
-          <Card className="brutalist-border bg-card overflow-hidden rotate-slight">
+          <Card className="brutalist-border bg-card overflow-hidden">
             <CardHeader className="pb-3 relative border-b-2 border-black">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -80,7 +80,7 @@ export function WalletDashboard() {
                       </Badge>
                       <Badge
                         variant="outline"
-                        className="text-xs border-2 border-black font-black uppercase bg-warning"
+                        className="text-xs border-2 border-black font-black uppercase bg-secondary"
                       >
                         Testnet
                       </Badge>
@@ -181,13 +181,13 @@ export function WalletDashboard() {
             <TabsContent value="actions" className="space-y-4">
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <Card
-                  className="brutalist-border hover:border-primary transition-all cursor-pointer group bg-card rotate-slight"
+                  className="brutalist-border hover:border-primary transition-all cursor-pointer group bg-card"
                   onClick={() => setShowSendTx(true)}
                 >
                   <CardHeader className="pb-2 border-b-2 border-black">
                     <CardTitle className="flex items-center gap-3 text-base font-black uppercase">
-                      <div className="w-10 h-10 bg-warning flex items-center justify-center border-2 border-black">
-                        <Send className="h-5 w-5 text-warning-foreground" />
+                      <div className="w-10 h-10 bg-primary flex items-center justify-center border-2 border-black">
+                        <Send className="h-5 w-5 text-primary-foreground" />
                       </div>
                       Send TX
                     </CardTitle>
@@ -198,7 +198,7 @@ export function WalletDashboard() {
                 </Card>
 
                 <Card
-                  className="brutalist-border hover:border-primary transition-all cursor-pointer group bg-card -rotate-1"
+                  className="brutalist-border hover:border-primary transition-all cursor-pointer group bg-card"
                   onClick={() => {
                     const tab = document.querySelector('[data-state="inactive"][value="networks"]') as HTMLElement
                     tab?.click()
@@ -218,7 +218,7 @@ export function WalletDashboard() {
                 </Card>
 
                 <Card
-                  className="brutalist-border hover:border-primary transition-all cursor-pointer group bg-card rotate-1"
+                  className="brutalist-border hover:border-primary transition-all cursor-pointer group bg-card"
                   onClick={() => setShowHistory(true)}
                 >
                   <CardHeader className="pb-2 border-b-2 border-black">
@@ -254,7 +254,7 @@ export function WalletDashboard() {
                     </div>
                     <div className="space-y-1">
                       <p className="text-xs uppercase">Type</p>
-                      <Badge variant="outline" className="text-xs border-2 border-black font-black bg-warning">
+                      <Badge variant="outline" className="text-xs border-2 border-black font-black bg-secondary">
                         Testnet
                       </Badge>
                     </div>

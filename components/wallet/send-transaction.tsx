@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useWallet } from "@/lib/wallet/wallet-provider"
 import { ethers } from "ethers"
-import { Send, Loader2, CheckCircle2, AlertCircle, ExternalLink } from "lucide-react"
+import { Send, Loader2, CheckCircle2, AlertCircle, ExternalLink, Eye } from "lucide-react"
 import { getChainById } from "@/lib/wallet/chain-config"
 
 interface SendTransactionProps {
@@ -17,7 +17,7 @@ interface SendTransactionProps {
 }
 
 export function SendTransaction({ open, onOpenChange }: SendTransactionProps) {
-  const { account, getProvider, refreshBalance, chainId } = useWallet()
+  const { activeAccount, getProvider, refreshBalance, chainId } = useWallet()
   const [recipient, setRecipient] = useState("")
   const [amount, setAmount] = useState("")
   const [gasLimit, setGasLimit] = useState("21000")
@@ -43,7 +43,17 @@ export function SendTransaction({ open, onOpenChange }: SendTransactionProps) {
   }
 
   const sendTransaction = async () => {
-    if (!account || !recipient || !amount) return
+    if (!activeAccount || !recipient || !amount) return
+
+    if (activeAccount.isWatchOnly) {
+      setError("Cannot send transactions from a watch-only account")
+      return
+    }
+
+    if (!activeAccount.privateKey) {
+      setError("Private key not available")
+      return
+    }
 
     setIsLoading(true)
     setError("")
@@ -62,7 +72,7 @@ export function SendTransaction({ open, onOpenChange }: SendTransactionProps) {
       }
 
       // Create wallet instance with provider
-      const wallet = new ethers.Wallet(account.privateKey, provider)
+      const wallet = new ethers.Wallet(activeAccount.privateKey, provider)
 
       // Prepare transaction
       const tx = {
@@ -101,67 +111,89 @@ export function SendTransaction({ open, onOpenChange }: SendTransactionProps) {
     }
   }
 
+  const isWatchOnly = activeAccount?.isWatchOnly
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md border-[3px] border-foreground shadow-brutal bg-background">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 font-mono uppercase font-black">
             <Send className="h-5 w-5" />
-            Send Transaction
+            SEND TRANSACTION
           </DialogTitle>
-          <DialogDescription>
-            Send {chain?.nativeCurrency.symbol} to any address on {chain?.name}
+          <DialogDescription className="font-mono text-xs">
+            SEND {chain?.nativeCurrency.symbol} TO ANY ADDRESS ON {chain?.name.toUpperCase()}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
+          {isWatchOnly && (
+            <Alert className="border-[3px] border-foreground bg-warning/20">
+              <Eye className="h-4 w-4" />
+              <AlertDescription className="font-mono text-xs">
+                THIS IS A WATCH-ONLY ACCOUNT. YOU CANNOT SEND TRANSACTIONS WITHOUT THE PRIVATE KEY.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {success ? (
             <div className="space-y-4 py-4">
               <div className="flex flex-col items-center gap-3 text-center">
-                <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center">
-                  <CheckCircle2 className="h-8 w-8 text-success" />
+                <div className="w-16 h-16 border-[3px] border-foreground bg-[#00ff00] flex items-center justify-center">
+                  <CheckCircle2 className="h-8 w-8 text-black" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">Transaction Sent!</h3>
-                  <p className="text-sm text-muted-foreground mt-1">Your transaction has been confirmed</p>
+                  <h3 className="font-mono font-black text-lg uppercase">TRANSACTION SENT!</h3>
+                  <p className="font-mono text-sm text-muted-foreground mt-1">YOUR TRANSACTION HAS BEEN CONFIRMED</p>
                 </div>
               </div>
 
               {txHash && (
-                <Alert>
+                <Alert className="border-[3px] border-foreground bg-background">
                   <AlertDescription className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Transaction Hash</span>
-                      <Button variant="ghost" size="sm" onClick={openExplorer} className="h-7">
+                      <span className="font-mono text-xs text-muted-foreground uppercase">Transaction Hash</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={openExplorer}
+                        className="h-7 font-mono text-xs border-2 border-foreground"
+                      >
                         <ExternalLink className="h-3 w-3 mr-1" />
-                        Explorer
+                        EXPLORER
                       </Button>
                     </div>
-                    <code className="block text-xs bg-muted p-2 rounded font-mono break-all">{txHash}</code>
+                    <code className="block text-xs bg-muted p-2 border-2 border-foreground font-mono break-all">
+                      {txHash}
+                    </code>
                   </AlertDescription>
                 </Alert>
               )}
 
-              <Button onClick={handleClose} className="w-full">
-                Close
+              <Button onClick={handleClose} className="w-full border-2 border-foreground font-black uppercase">
+                CLOSE
               </Button>
             </div>
           ) : (
             <>
               <div className="space-y-2">
-                <Label htmlFor="recipient">Recipient Address</Label>
+                <Label htmlFor="recipient" className="font-mono uppercase text-xs font-black">
+                  RECIPIENT ADDRESS
+                </Label>
                 <Input
                   id="recipient"
                   placeholder="0x..."
                   value={recipient}
                   onChange={(e) => setRecipient(e.target.value)}
-                  className="font-mono text-sm"
-                  disabled={isLoading}
+                  className="font-mono text-sm border-[3px] border-foreground"
+                  disabled={isLoading || isWatchOnly}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="amount">Amount ({chain?.nativeCurrency.symbol})</Label>
+                <Label htmlFor="amount" className="font-mono uppercase text-xs font-black">
+                  AMOUNT ({chain?.nativeCurrency.symbol})
+                </Label>
                 <Input
                   id="amount"
                   type="number"
@@ -169,50 +201,63 @@ export function SendTransaction({ open, onOpenChange }: SendTransactionProps) {
                   placeholder="0.01"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  disabled={isLoading}
+                  className="font-mono text-sm border-[3px] border-foreground"
+                  disabled={isLoading || isWatchOnly}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="gas">Gas Limit</Label>
+                <Label htmlFor="gas" className="font-mono uppercase text-xs font-black">
+                  GAS LIMIT
+                </Label>
                 <Input
                   id="gas"
                   type="number"
                   value={gasLimit}
                   onChange={(e) => setGasLimit(e.target.value)}
-                  disabled={isLoading}
+                  className="font-mono text-sm border-[3px] border-foreground"
+                  disabled={isLoading || isWatchOnly}
                 />
-                <p className="text-xs text-muted-foreground">Default: 21000 for simple transfers</p>
+                <p className="font-mono text-xs text-muted-foreground">DEFAULT: 21000 FOR SIMPLE TRANSFERS</p>
               </div>
 
               {error && (
-                <Alert variant="destructive">
+                <Alert variant="destructive" className="border-[3px] border-foreground">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertDescription className="text-sm">{error}</AlertDescription>
+                  <AlertDescription className="font-mono text-sm">{error}</AlertDescription>
                 </Alert>
               )}
 
               {txHash && !success && (
-                <Alert>
+                <Alert className="border-[3px] border-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <AlertDescription className="text-sm">Waiting for confirmation...</AlertDescription>
+                  <AlertDescription className="font-mono text-sm">WAITING FOR CONFIRMATION...</AlertDescription>
                 </Alert>
               )}
 
               <div className="flex gap-2">
-                <Button variant="outline" onClick={handleClose} className="flex-1 bg-transparent" disabled={isLoading}>
-                  Cancel
+                <Button
+                  variant="outline"
+                  onClick={handleClose}
+                  className="flex-1 bg-transparent border-[3px] border-foreground font-black uppercase"
+                  disabled={isLoading}
+                >
+                  CANCEL
                 </Button>
-                <Button onClick={sendTransaction} className="flex-1" disabled={isLoading || !recipient || !amount}>
+                <Button
+                  onClick={sendTransaction}
+                  className="flex-1 border-[3px] border-foreground font-black uppercase"
+                  disabled={isLoading || !recipient || !amount || isWatchOnly}
+                >
                   {isLoading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Sending...
+                      SENDING...
                     </>
                   ) : (
                     <>
                       <Send className="h-4 w-4 mr-2" />
-                      Send
+                      SEND
                     </>
                   )}
                 </Button>

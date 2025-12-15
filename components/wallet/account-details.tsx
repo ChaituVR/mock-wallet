@@ -16,26 +16,43 @@ import { useWallet } from "@/lib/wallet/wallet-provider"
 import { Eye, EyeOff, Copy, Key, FileText, AlertTriangle } from "lucide-react"
 
 export function AccountDetails() {
-  const { account } = useWallet()
+  const { activeAccount } = useWallet()
   const [showPrivateKey, setShowPrivateKey] = useState(false)
   const [showMnemonic, setShowMnemonic] = useState(false)
   const [copiedPk, setCopiedPk] = useState(false)
   const [copiedMn, setCopiedMn] = useState(false)
 
   const copyPrivateKey = async () => {
-    if (account?.privateKey) {
-      await navigator.clipboard.writeText(account.privateKey)
+    if (activeAccount?.privateKey) {
+      await navigator.clipboard.writeText(activeAccount.privateKey)
       setCopiedPk(true)
       setTimeout(() => setCopiedPk(false), 2000)
     }
   }
 
   const copyMnemonic = async () => {
-    if (account?.mnemonic) {
-      await navigator.clipboard.writeText(account.mnemonic)
+    if (activeAccount?.mnemonic) {
+      await navigator.clipboard.writeText(activeAccount.mnemonic)
       setCopiedMn(true)
       setTimeout(() => setCopiedMn(false), 2000)
     }
+  }
+
+  if (activeAccount?.isWatchOnly) {
+    return (
+      <div className="space-y-3">
+        <Label className="font-mono uppercase text-xs font-black flex items-center gap-2">
+          <Eye className="h-4 w-4" />
+          WATCH-ONLY ACCOUNT
+        </Label>
+        <Alert className="border-[3px] border-foreground bg-muted/50">
+          <Eye className="h-4 w-4" />
+          <AlertDescription className="font-mono text-xs">
+            THIS IS A WATCH-ONLY ADDRESS. NO PRIVATE KEY AVAILABLE. YOU CAN VIEW BALANCE BUT CANNOT SIGN TRANSACTIONS.
+          </AlertDescription>
+        </Alert>
+      </div>
+    )
   }
 
   return (
@@ -46,7 +63,7 @@ export function AccountDetails() {
       </Label>
 
       <div className="space-y-3">
-        {/* Private Key - Always shown */}
+        {/* Private Key - Always shown for non-watch-only accounts */}
         <Dialog>
           <DialogTrigger asChild>
             <Button
@@ -106,7 +123,7 @@ export function AccountDetails() {
                 </div>
                 <div className="relative">
                   <code className="block w-full p-3 bg-muted border-[3px] border-foreground font-mono text-xs break-all">
-                    {showPrivateKey ? account?.privateKey : "•".repeat(account?.privateKey?.length || 64)}
+                    {showPrivateKey ? activeAccount?.privateKey : "•".repeat(activeAccount?.privateKey?.length || 64)}
                   </code>
                   <Button
                     variant="ghost"
@@ -123,7 +140,7 @@ export function AccountDetails() {
         </Dialog>
 
         {/* Mnemonic Phrase - Only shown if available */}
-        {account?.mnemonic && (
+        {activeAccount?.mnemonic && (
           <Dialog>
             <DialogTrigger asChild>
               <Button
@@ -185,8 +202,8 @@ export function AccountDetails() {
                     <div className="p-4 bg-muted border-[3px] border-foreground">
                       <div className="grid grid-cols-3 gap-3">
                         {(showMnemonic
-                          ? account.mnemonic.split(" ")
-                          : Array(account.mnemonic.split(" ").length).fill("•••••")
+                          ? activeAccount.mnemonic.split(" ")
+                          : Array(activeAccount.mnemonic.split(" ").length).fill("•••••")
                         ).map((word, i) => (
                           <div
                             key={i}
@@ -213,7 +230,7 @@ export function AccountDetails() {
           </Dialog>
         )}
 
-        {!account?.mnemonic && (
+        {!activeAccount?.mnemonic && (
           <div className="p-3 border-[3px] border-dashed border-foreground/50 bg-muted/50">
             <p className="font-mono text-xs text-muted-foreground">
               RECOVERY PHRASE NOT AVAILABLE (IMPORTED VIA PRIVATE KEY)
