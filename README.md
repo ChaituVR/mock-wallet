@@ -22,6 +22,24 @@ Continue building your app on:
 
 **[https://v0.app/chat/c5nhqPxVN1O](https://v0.app/chat/c5nhqPxVN1O)**
 
+## Development
+
+This project uses [Bun](https://bun.sh) for faster package management and script execution.
+
+```bash
+# Install dependencies
+bun install
+
+# Start development server
+bun dev
+
+# Build for production
+bun run build
+
+# Start production server
+bun start
+```
+
 ## How It Works
 
 1. Create and modify your project using [v0.app](https://v0.app)

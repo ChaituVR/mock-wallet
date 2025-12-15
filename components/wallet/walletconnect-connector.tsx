@@ -32,6 +32,7 @@ export function WalletConnectConnector() {
   const [wcManager] = useState(() => WalletConnectManager.getInstance())
   const [showSessionDialog, setShowSessionDialog] = useState(false)
   const [showRequestDialog, setShowRequestDialog] = useState(false)
+  const [showProjectIdDialog, setShowProjectIdDialog] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [initStatus, setInitStatus] = useState<"idle" | "initializing" | "ready" | "error">("idle")
   const initRef = useRef(false)
@@ -294,7 +295,7 @@ export function WalletConnectConnector() {
             <Alert className="border-[3px] border-foreground bg-warning/20">
               <Eye className="h-4 w-4" />
               <AlertDescription className="font-mono text-xs font-bold">
-                WATCH-ONLY ACCOUNTS CANNOT SIGN TRANSACTIONS OR MESSAGES VIA WALLETCONNECT
+                WATCH-ONLY MODE: Can connect to dApps but cannot sign transactions or messages
               </AlertDescription>
             </Alert>
           )}
@@ -305,10 +306,7 @@ export function WalletConnectConnector() {
               <AlertDescription className="space-y-3">
                 <p className="font-mono text-xs font-bold">Reown Project ID required for WalletConnect</p>
                 <Button
-                  onClick={() => {
-                    const settingsBtn = document.querySelector("[data-settings-toggle]") as HTMLButtonElement
-                    if (settingsBtn) settingsBtn.click()
-                  }}
+                  onClick={() => setShowProjectIdDialog(true)}
                   size="sm"
                   className="w-full border-[2px] border-foreground font-black uppercase"
                 >
@@ -330,11 +328,11 @@ export function WalletConnectConnector() {
                     value={wcUri}
                     onChange={(e) => setWcUri(e.target.value)}
                     className="font-mono text-sm border-[3px] border-foreground"
-                    disabled={isConnecting || initStatus !== "ready" || isWatchOnly}
+                    disabled={isConnecting || initStatus !== "ready"}
                   />
                   <Button
                     onClick={handleConnect}
-                    disabled={!wcUri.trim() || isConnecting || initStatus !== "ready" || isWatchOnly}
+                    disabled={!wcUri.trim() || isConnecting || initStatus !== "ready"}
                     className="px-6 bg-foreground text-background border-[3px] border-foreground font-mono uppercase hover:bg-background hover:text-foreground"
                   >
                     {isConnecting ? <Loader2 className="h-4 w-4 animate-spin" /> : "PAIR"}
@@ -556,6 +554,74 @@ export function WalletConnectConnector() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Project ID Settings Dialog */}
+      <Dialog open={showProjectIdDialog} onOpenChange={setShowProjectIdDialog}>
+        <DialogContent className="border-4 border-foreground bg-card">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase">Reown Project ID</DialogTitle>
+            <DialogDescription className="font-mono font-bold">
+              Required for WalletConnect functionality
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Alert className="border-2 border-foreground">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="text-xs font-mono">
+                Get your free project ID from{" "}
+                <a
+                  href="https://cloud.reown.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline font-bold"
+                >
+                  cloud.reown.com
+                </a>
+              </AlertDescription>
+            </Alert>
+            <ProjectIdInput onClose={() => setShowProjectIdDialog(false)} />
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
+  )
+}
+
+function ProjectIdInput({ onClose }: { onClose: () => void }) {
+  const { projectId, setProjectId } = useWallet()
+  const [localValue, setLocalValue] = useState(projectId)
+  const [saved, setSaved] = useState(false)
+
+  const handleSave = () => {
+    setProjectId(localValue)
+    setSaved(true)
+    setTimeout(() => {
+      setSaved(false)
+      onClose()
+    }, 1000)
+  }
+
+  return (
+    <div className="space-y-3">
+      <Label htmlFor="project-id-input" className="font-mono uppercase text-xs font-black">
+        Project ID
+      </Label>
+      <Input
+        id="project-id-input"
+        type="text"
+        placeholder="Enter your Reown/WalletConnect project ID..."
+        value={localValue}
+        onChange={(e) => setLocalValue(e.target.value)}
+        className="font-mono text-sm border-2 border-foreground"
+      />
+      <Button
+        onClick={handleSave}
+        size="lg"
+        className="w-full h-12 font-black uppercase border-2 border-foreground brutalist-shadow"
+        disabled={!localValue.trim() || localValue === projectId}
+      >
+        {saved ? "Saved!" : "Save Project ID"}
+      </Button>
+    </div>
   )
 }

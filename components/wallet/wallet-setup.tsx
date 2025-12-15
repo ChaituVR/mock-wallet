@@ -54,7 +54,7 @@ export function WalletSetup() {
             </div>
             <div className="flex items-center gap-2">
               <ThemeToggle />
-              {isConnected && accounts.length > 0 && <AccountSwitcher />}
+              <AccountSwitcher />
             </div>
           </div>
 

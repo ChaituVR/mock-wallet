@@ -16,6 +16,7 @@ interface WalletContextType {
   projectId: string
   createNewWallet: () => void
   importWallet: (privateKeyOrMnemonicOrAddress: string) => void
+  addWallet: (privateKeyOrMnemonicOrAddress: string) => void
   addAccountFromSeed: () => void
   switchAccount: (index: number) => void
   disconnectWallet: () => void
@@ -184,6 +185,44 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
     }
   }
 
+  const addWallet = (privateKeyOrMnemonicOrAddress: string) => {
+    try {
+      let wallet: WalletAccount
+      const input = privateKeyOrMnemonicOrAddress.trim()
+
+      // Check if it's an Ethereum address (watch-only)
+      if (ethers.isAddress(input)) {
+        wallet = WalletManager.createWatchOnly(input)
+      } else {
+        // Check if mnemonic or private key
+        const words = input.split(/\s+/)
+        if (words.length === 12 || words.length === 24) {
+          wallet = WalletManager.importFromMnemonic(input, 0)
+        } else {
+          wallet = WalletManager.importFromPrivateKey(input)
+        }
+      }
+
+      // Check if wallet already exists
+      const existingIndex = accounts.findIndex((a) => a.address.toLowerCase() === wallet.address.toLowerCase())
+      if (existingIndex !== -1) {
+        // Switch to existing account
+        WalletManager.setActiveAccountIndex(existingIndex)
+        setActiveAccountIndex(existingIndex)
+        return
+      }
+
+      const newAccounts = [...accounts, wallet]
+      WalletManager.saveAccounts(newAccounts)
+      WalletManager.setActiveAccountIndex(newAccounts.length - 1)
+      setAccounts(newAccounts)
+      setActiveAccountIndex(newAccounts.length - 1)
+    } catch (error) {
+      console.error("[v0] Error adding wallet:", error)
+      throw new Error("Invalid private key, mnemonic phrase, or Ethereum address")
+    }
+  }
+
   const addAccountFromSeed = () => {
     if (accounts.length === 0 || !activeAccount?.mnemonic) {
       throw new Error("No seed phrase available")
@@ -208,10 +247,23 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
   }
 
   const disconnectWallet = () => {
-    WalletManager.clearAllAccounts()
-    setAccounts([])
-    setActiveAccountIndex(0)
-    setBalance("0.0")
+    if (accounts.length <= 1) {
+      // If only one account, clear all
+      WalletManager.clearAllAccounts()
+      setAccounts([])
+      setActiveAccountIndex(0)
+      setBalance("0.0")
+    } else {
+      // Remove only the active account
+      const newAccounts = accounts.filter((_, index) => index !== activeAccountIndex)
+      WalletManager.saveAccounts(newAccounts)
+      
+      // Set new active index (either same position or previous if was last)
+      const newActiveIndex = activeAccountIndex >= newAccounts.length ? newAccounts.length - 1 : activeAccountIndex
+      WalletManager.setActiveAccountIndex(newActiveIndex)
+      setAccounts(newAccounts)
+      setActiveAccountIndex(newActiveIndex)
+    }
   }
 
   const switchChain = async (newChainId: number) => {
@@ -237,6 +289,7 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
         projectId,
         createNewWallet,
         importWallet,
+        addWallet,
         addAccountFromSeed,
         switchAccount,
         disconnectWallet,

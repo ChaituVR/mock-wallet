@@ -1,0 +1,19 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    @media (prefers-color-scheme: light) {
+      .bg { fill: hsl(0 0% 100%); }
+      .border { stroke: hsl(240 5.9% 10%); }
+      .icon { stroke: hsl(240 5.9% 10%); }
+    }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: hsl(240 10% 3.9%); }
+      .border { stroke: hsl(0 0% 98%); }
+      .icon { stroke: hsl(0 0% 98%); }
+    }
+  </style>
+  <rect class="bg" width="64" height="64" rx="12"/>
+  <rect class="border" x="1" y="1" width="62" height="62" rx="11" stroke-width="2" fill="none"/>
+  <g transform="translate(16, 16)">
+    <path class="icon" d="M16 2.5L28.856 9.25v13.5L16 29.5 3.144 22.75V9.25L16 2.5z" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </g>
+</svg>

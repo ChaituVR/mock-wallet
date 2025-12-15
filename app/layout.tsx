@@ -16,7 +16,11 @@ export const metadata: Metadata = {
   description:
     "The ultimate Web3 test wallet for developers. Multi-account support, watch-only addresses, test transactions on any testnet. Connect to dApps via WalletConnect. Auto-import via URL.",
   keywords: ["web3", "wallet", "test", "sepolia", "ethereum", "walletconnect", "reown", "developer", "sandbox"],
-    generator: 'v0.app'
+  generator: 'v0.app',
+  icons: {
+    icon: "/favicon.svg",
+    apple: "/apple-icon.png",
+  },
 }
 
 export default function RootLayout({

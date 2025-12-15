@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { useWallet } from "@/lib/wallet/wallet-provider"
 import { WalletManager } from "@/lib/wallet/wallet-manager"
-import { Check, Plus, Eye, Wallet, Home } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { Check, Plus, Eye, Wallet, Download, AlertCircle } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,12 +13,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export function AccountSwitcher() {
-  const router = useRouter()
-  const { accounts, activeAccountIndex, switchAccount, addAccountFromSeed, disconnectWallet, getAccountBalance } =
+  const { accounts, activeAccountIndex, switchAccount, addAccountFromSeed, addWallet, getAccountBalance } =
     useWallet()
   const [balances, setBalances] = useState<Record<string, string>>({})
+  const [showImportDialog, setShowImportDialog] = useState(false)
+  const [importValue, setImportValue] = useState("")
+  const [importError, setImportError] = useState("")
 
   useEffect(() => {
     const fetchBalances = async () => {
@@ -55,12 +65,71 @@ export function AccountSwitcher() {
     }
   }
 
-  const handleGoHome = () => {
-    disconnectWallet()
-    router.push("/")
+  const handleImportWallet = () => {
+    try {
+      setImportError("")
+      addWallet(importValue)
+      setImportValue("")
+      setShowImportDialog(false)
+    } catch (error) {
+      setImportError(error instanceof Error ? error.message : "Failed to import wallet")
+    }
   }
 
-  if (!activeAccount) return null
+  // Show import button if no accounts
+  if (!activeAccount) {
+    return (
+      <>
+        <Button
+          onClick={() => setShowImportDialog(true)}
+          variant="outline"
+          className="gap-2 border-[3px] border-foreground font-black uppercase brutalist-shadow hover:bg-accent h-11 bg-transparent"
+        >
+          <Download className="w-4 h-4" />
+          Import Wallet
+        </Button>
+
+        <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+          <DialogContent className="border-4 border-foreground bg-card">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-black uppercase">Import Wallet</DialogTitle>
+              <DialogDescription className="font-mono font-bold">
+                Import using private key, mnemonic phrase, or Ethereum address (watch-only).
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Input
+                placeholder="Private key, mnemonic phrase, or 0x address..."
+                value={importValue}
+                onChange={(e) => {
+                  setImportValue(e.target.value)
+                  setImportError("")
+                }}
+                className="font-mono text-sm border-2 border-foreground"
+              />
+              {importError && (
+                <Alert className="border-2 border-foreground bg-destructive">
+                  <AlertCircle className="h-4 w-4 text-destructive-foreground" />
+                  <AlertDescription className="text-xs font-mono font-bold text-destructive-foreground">
+                    {importError}
+                  </AlertDescription>
+                </Alert>
+              )}
+              <Button
+                onClick={handleImportWallet}
+                size="lg"
+                className="w-full h-12 font-black uppercase border-2 border-foreground brutalist-shadow"
+                disabled={!importValue.trim()}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Import Wallet
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </>
+    )
+  }
 
   return (
     <DropdownMenu>
@@ -120,14 +189,52 @@ export function AccountSwitcher() {
         )}
 
         <DropdownMenuItem
-          onClick={handleGoHome}
+          onClick={() => setShowImportDialog(true)}
           className="flex items-center gap-2 p-3 font-black uppercase text-xs cursor-pointer border-2 border-foreground hover:bg-secondary hover:text-secondary-foreground"
         >
-          <Home className="w-4 h-4" />
+          <Download className="w-4 h-4" />
           Import New Wallet
         </DropdownMenuItem>
-        {/* </CHANGE> */}
       </DropdownMenuContent>
+
+      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+        <DialogContent className="border-4 border-foreground bg-card">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase">Import Wallet</DialogTitle>
+            <DialogDescription className="font-mono font-bold">
+              Import using private key, mnemonic phrase, or Ethereum address (watch-only).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              placeholder="Private key, mnemonic phrase, or 0x address..."
+              value={importValue}
+              onChange={(e) => {
+                setImportValue(e.target.value)
+                setImportError("")
+              }}
+              className="font-mono text-sm border-2 border-foreground"
+            />
+            {importError && (
+              <Alert className="border-2 border-foreground bg-destructive">
+                <AlertCircle className="h-4 w-4 text-destructive-foreground" />
+                <AlertDescription className="text-xs font-mono font-bold text-destructive-foreground">
+                  {importError}
+                </AlertDescription>
+              </Alert>
+            )}
+            <Button
+              onClick={handleImportWallet}
+              size="lg"
+              className="w-full h-12 font-black uppercase border-2 border-foreground brutalist-shadow"
+              disabled={!importValue.trim()}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Import Wallet
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </DropdownMenu>
   )
 }
