@@ -33,7 +33,7 @@ import { WalletConnectConnector } from "./walletconnect-connector"
 import { AccountsManager } from "./accounts-manager"
 
 export function WalletDashboard() {
-  const { account, balance, chainId, refreshBalance, disconnectWallet } = useWallet()
+  const { activeAccount: account, balance, chainId, refreshBalance, disconnectWallet } = useWallet()
   const [copied, setCopied] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [showSendTx, setShowSendTx] = useState(false)
