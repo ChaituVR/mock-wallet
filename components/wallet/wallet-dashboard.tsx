@@ -20,6 +20,7 @@ import {
   ExternalLink,
   Link2,
   Sparkles,
+  Users,
 } from "lucide-react"
 import { WalletHeader } from "./wallet-header"
 import { AccountDetails } from "./account-details"
@@ -29,6 +30,7 @@ import { TransactionHistory } from "./transaction-history"
 import { NetworkManager } from "./network-manager"
 import { ChainInfo } from "./chain-info"
 import { WalletConnectConnector } from "./walletconnect-connector"
+import { AccountsManager } from "./accounts-manager"
 
 export function WalletDashboard() {
   const { account, balance, chainId, refreshBalance, disconnectWallet } = useWallet()
@@ -36,8 +38,15 @@ export function WalletDashboard() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [showSendTx, setShowSendTx] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
+  const [activeTab, setActiveTab] = useState("actions")
 
   const chain = getChainById(chainId)
+
+  // Expose setActiveTab for external components
+  if (typeof window !== 'undefined') {
+    (window as any).setActiveTab = setActiveTab
+  }
+
 
   const copyAddress = async () => {
     if (account?.address) {
@@ -158,8 +167,8 @@ export function WalletDashboard() {
             </CardContent>
           </Card>
 
-          <Tabs defaultValue="actions" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-4 h-12 p-0 bg-muted border-2 border-black">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+            <TabsList className="grid w-full grid-cols-5 h-12 p-0 bg-muted border-2 border-black">
               <TabsTrigger value="actions" className="font-black uppercase data-[state=active]:bg-card">
                 <Sparkles className="w-4 h-4 mr-2 hidden sm:block" />
                 Actions
@@ -171,6 +180,10 @@ export function WalletDashboard() {
               <TabsTrigger value="networks" className="font-black uppercase data-[state=active]:bg-card">
                 <Network className="w-4 h-4 mr-2 hidden sm:block" />
                 Networks
+              </TabsTrigger>
+              <TabsTrigger value="accounts" className="font-black uppercase data-[state=active]:bg-card">
+                <Users className="w-4 h-4 mr-2 hidden sm:block" />
+                Accounts
               </TabsTrigger>
               <TabsTrigger value="account" className="font-black uppercase data-[state=active]:bg-card">
                 <Key className="w-4 h-4 mr-2 hidden sm:block" />
@@ -271,6 +284,10 @@ export function WalletDashboard() {
               <ChainSelector />
               <NetworkManager />
               <ChainInfo />
+            </TabsContent>
+
+            <TabsContent value="accounts" className="space-y-4">
+              <AccountsManager />
             </TabsContent>
 
             <TabsContent value="account" className="space-y-4">

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useWallet } from "@/lib/wallet/wallet-provider"
 import { WalletManager } from "@/lib/wallet/wallet-manager"
-import { Check, Plus, Eye, Wallet, Download, AlertCircle } from "lucide-react"
+import { Check, Plus, Eye, Wallet, Download, AlertCircle, Users, Upload } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,8 +27,11 @@ export function AccountSwitcher() {
     useWallet()
   const [balances, setBalances] = useState<Record<string, string>>({})
   const [showImportDialog, setShowImportDialog] = useState(false)
+  const [showCsvImportDialog, setShowCsvImportDialog] = useState(false)
   const [importValue, setImportValue] = useState("")
   const [importError, setImportError] = useState("")
+  const [csvImportError, setCsvImportError] = useState("")
+  const [csvImportSuccess, setCsvImportSuccess] = useState(0)
 
   useEffect(() => {
     const fetchBalances = async () => {
@@ -76,18 +79,105 @@ export function AccountSwitcher() {
     }
   }
 
+  const handleCsvImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        setCsvImportError("")
+        setCsvImportSuccess(0)
+        const text = e.target?.result as string
+        const lines = text.split("\n").filter(line => line.trim())
+        
+        // Skip header row
+        let imported = 0
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i].trim()
+          if (!line) continue
+          
+          // Parse CSV (handle quoted values)
+          const values: string[] = []
+          let currentValue = ""
+          let inQuotes = false
+          
+          for (let j = 0; j < line.length; j++) {
+            const char = line[j]
+            if (char === '"') {
+              inQuotes = !inQuotes
+            } else if (char === ',' && !inQuotes) {
+              values.push(currentValue)
+              currentValue = ""
+            } else {
+              currentValue += char
+            }
+          }
+          values.push(currentValue) // Push last value
+          
+          try {
+            // Check if it's a watch-only account (Type column is "Watch Only" or empty key)
+            const type = values[4]?.trim()
+            const keyOrMnemonic = values[1]?.trim()
+            
+            if (type === "Watch Only" || !keyOrMnemonic) {
+              // Import as watch-only using address from column 0
+              const address = values[0]?.trim()
+              if (address) {
+                addWallet(address)
+                imported++
+              }
+            } else if (keyOrMnemonic) {
+              // Import with private key or mnemonic
+              addWallet(keyOrMnemonic)
+              imported++
+            }
+          } catch (error) {
+            console.error(`Failed to import row ${i}:`, error)
+          }
+        }
+        
+        setCsvImportSuccess(imported)
+        if (imported > 0) {
+          setTimeout(() => {
+            setShowCsvImportDialog(false)
+            setCsvImportSuccess(0)
+          }, 2000)
+        } else {
+          setCsvImportError("No valid wallets found in CSV file")
+        }
+      } catch (error) {
+        setCsvImportError(error instanceof Error ? error.message : "Failed to parse CSV file")
+      }
+    }
+    reader.readAsText(file)
+    
+    // Reset file input
+    event.target.value = ""
+  }
+
   // Show import button if no accounts
   if (!activeAccount) {
     return (
       <>
-        <Button
-          onClick={() => setShowImportDialog(true)}
-          variant="outline"
-          className="gap-2 border-[3px] border-foreground font-black uppercase brutalist-shadow hover:bg-accent h-11 bg-transparent"
-        >
-          <Download className="w-4 h-4" />
-          Import Wallet
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setShowImportDialog(true)}
+            variant="outline"
+            className="gap-2 border-[3px] border-foreground font-black uppercase brutalist-shadow hover:bg-accent h-11 bg-transparent"
+          >
+            <Download className="w-4 h-4" />
+            Import Wallet
+          </Button>
+          <Button
+            onClick={() => setShowCsvImportDialog(true)}
+            variant="outline"
+            className="gap-2 border-[3px] border-foreground font-black uppercase brutalist-shadow hover:bg-accent h-11 bg-transparent"
+          >
+            <Upload className="w-4 h-4" />
+            Import CSV
+          </Button>
+        </div>
 
         <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
           <DialogContent className="border-4 border-foreground bg-card">
@@ -124,6 +214,51 @@ export function AccountSwitcher() {
                 <Download className="w-4 h-4 mr-2" />
                 Import Wallet
               </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showCsvImportDialog} onOpenChange={setShowCsvImportDialog}>
+          <DialogContent className="border-4 border-foreground bg-card">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-black uppercase">Import from CSV</DialogTitle>
+              <DialogDescription className="font-mono font-bold">
+                Upload a CSV file exported from the Accounts page to import multiple wallets at once.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="border-2 border-dashed border-foreground rounded-lg p-6 text-center bg-muted/50">
+                <Upload className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
+                <label htmlFor="csv-upload" className="cursor-pointer">
+                  <div className="text-sm font-black uppercase mb-1">Choose CSV File</div>
+                  <div className="text-xs font-mono text-muted-foreground">
+                    Accepts files with private keys or mnemonic phrases
+                  </div>
+                </label>
+                <input
+                  id="csv-upload"
+                  type="file"
+                  accept=".csv"
+                  onChange={handleCsvImport}
+                  className="hidden"
+                />
+              </div>
+              {csvImportError && (
+                <Alert className="border-2 border-foreground bg-destructive">
+                  <AlertCircle className="h-4 w-4 text-destructive-foreground" />
+                  <AlertDescription className="text-xs font-mono font-bold text-destructive-foreground">
+                    {csvImportError}
+                  </AlertDescription>
+                </Alert>
+              )}
+              {csvImportSuccess > 0 && (
+                <Alert className="border-2 border-foreground bg-green-500 text-white">
+                  <Check className="h-4 w-4" />
+                  <AlertDescription className="text-xs font-mono font-bold">
+                    Successfully imported {csvImportSuccess} wallet{csvImportSuccess !== 1 ? "s" : ""}!
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
           </DialogContent>
         </Dialog>
@@ -178,6 +313,18 @@ export function AccountSwitcher() {
 
         <DropdownMenuSeparator className="my-2 bg-foreground h-[2px]" />
 
+        <DropdownMenuItem
+          onSelect={() => {
+            if (typeof window !== 'undefined' && (window as any).setActiveTab) {
+              (window as any).setActiveTab('accounts')
+            }
+          }}
+          className="flex items-center gap-2 p-3 font-black uppercase text-xs cursor-pointer border-2 border-foreground hover:bg-accent mb-1"
+        >
+          <Users className="w-4 h-4" />
+          Manage Accounts
+        </DropdownMenuItem>
+
         {canAddAccount && (
           <DropdownMenuItem
             onClick={handleAddAccount}
@@ -190,10 +337,18 @@ export function AccountSwitcher() {
 
         <DropdownMenuItem
           onClick={() => setShowImportDialog(true)}
-          className="flex items-center gap-2 p-3 font-black uppercase text-xs cursor-pointer border-2 border-foreground hover:bg-secondary hover:text-secondary-foreground"
+          className="flex items-center gap-2 p-3 font-black uppercase text-xs cursor-pointer border-2 border-foreground hover:bg-secondary hover:text-secondary-foreground mb-1"
         >
           <Download className="w-4 h-4" />
           Import New Wallet
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
+          onClick={() => setShowCsvImportDialog(true)}
+          className="flex items-center gap-2 p-3 font-black uppercase text-xs cursor-pointer border-2 border-foreground hover:bg-secondary hover:text-secondary-foreground"
+        >
+          <Upload className="w-4 h-4" />
+          Import from CSV
         </DropdownMenuItem>
       </DropdownMenuContent>
 
@@ -232,6 +387,51 @@ export function AccountSwitcher() {
               <Download className="w-4 h-4 mr-2" />
               Import Wallet
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showCsvImportDialog} onOpenChange={setShowCsvImportDialog}>
+        <DialogContent className="border-4 border-foreground bg-card">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase">Import from CSV</DialogTitle>
+            <DialogDescription className="font-mono font-bold">
+              Upload a CSV file exported from the Accounts page to import multiple wallets at once.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="border-2 border-dashed border-foreground rounded-lg p-6 text-center bg-muted/50">
+              <Upload className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
+              <label htmlFor="csv-upload-dropdown" className="cursor-pointer">
+                <div className="text-sm font-black uppercase mb-1">Choose CSV File</div>
+                <div className="text-xs font-mono text-muted-foreground">
+                  Accepts files with private keys or mnemonic phrases
+                </div>
+              </label>
+              <input
+                id="csv-upload-dropdown"
+                type="file"
+                accept=".csv"
+                onChange={handleCsvImport}
+                className="hidden"
+              />
+            </div>
+            {csvImportError && (
+              <Alert className="border-2 border-foreground bg-destructive">
+                <AlertCircle className="h-4 w-4 text-destructive-foreground" />
+                <AlertDescription className="text-xs font-mono font-bold text-destructive-foreground">
+                  {csvImportError}
+                </AlertDescription>
+              </Alert>
+            )}
+            {csvImportSuccess > 0 && (
+              <Alert className="border-2 border-foreground bg-green-500 text-white">
+                <Check className="h-4 w-4" />
+                <AlertDescription className="text-xs font-mono font-bold">
+                  Successfully imported {csvImportSuccess} wallet{csvImportSuccess !== 1 ? "s" : ""}!
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
         </DialogContent>
       </Dialog>
