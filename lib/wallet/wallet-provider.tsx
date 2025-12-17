@@ -5,6 +5,13 @@ import { ethers } from "ethers"
 import { WalletManager, type WalletAccount } from "./wallet-manager"
 import { getChainRpcUrl } from "./chain-config"
 import { useSearchParams } from "next/navigation"
+import { type Token, ERC20_ABI, getTokensForChain } from "./token-config"
+
+interface TokenBalance extends Token {
+  balance: string
+  balanceFormatted: string
+  isLoading: boolean
+}
 
 interface WalletContextType {
   accounts: WalletAccount[]
@@ -15,6 +22,8 @@ interface WalletContextType {
   isConnected: boolean
   projectId: string
   agentMode: boolean
+  tokens: TokenBalance[]
+  customTokens: Token[]
   setAgentMode: (enabled: boolean) => void
   createNewWallet: () => void
   importWallet: (privateKeyOrMnemonicOrAddress: string) => void
@@ -28,6 +37,9 @@ interface WalletContextType {
   getProvider: () => ethers.JsonRpcProvider | null
   refreshBalance: () => Promise<void>
   getAccountBalance: (address: string) => Promise<string>
+  addCustomToken: (tokenAddress: string) => Promise<void>
+  removeToken: (tokenAddress: string) => void
+  refreshTokenBalances: () => Promise<void>
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined)
@@ -41,8 +53,22 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
   const [projectId, setProjectIdState] = useState("")
   const [hasCheckedUrl, setHasCheckedUrl] = useState(false)
   const [agentMode, setAgentModeState] = useState(false)
+  const [tokens, setTokens] = useState<TokenBalance[]>([])
+  const [customTokens, setCustomTokens] = useState<Token[]>([])
 
   const activeAccount = accounts[activeAccountIndex] || null
+
+  // Load custom tokens from localStorage
+  useEffect(() => {
+    const savedCustomTokens = localStorage.getItem("custom_tokens")
+    if (savedCustomTokens) {
+      try {
+        setCustomTokens(JSON.parse(savedCustomTokens))
+      } catch (error) {
+        console.error("[v0] Error loading custom tokens:", error)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     if (hasCheckedUrl) return
@@ -310,6 +336,126 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
     setAgentModeState(enabled)
   }
 
+  const refreshTokenBalances = async () => {
+    if (!activeAccount) {
+      setTokens([])
+      return
+    }
+
+    try {
+      const provider = getProvider()
+      if (!provider) {
+        setTokens([])
+        return
+      }
+
+      // Get default tokens for current chain
+      const defaultTokens = getTokensForChain(chainId)
+      // Combine with custom tokens for this chain
+      const chainCustomTokens = customTokens.filter((t) => t.chainId === chainId)
+      const allTokens = [...defaultTokens, ...chainCustomTokens]
+
+      // Initialize tokens with loading state
+      const initialTokens: TokenBalance[] = allTokens.map((token) => ({
+        ...token,
+        balance: "0",
+        balanceFormatted: "0",
+        isLoading: true,
+      }))
+      setTokens(initialTokens)
+
+      // Fetch balances for all tokens
+      const tokenBalances = await Promise.all(
+        allTokens.map(async (token) => {
+          try {
+            const contract = new ethers.Contract(token.address, ERC20_ABI, provider)
+            const balance = await contract.balanceOf(activeAccount.address)
+            const formatted = ethers.formatUnits(balance, token.decimals)
+            return {
+              ...token,
+              balance: balance.toString(),
+              balanceFormatted: Number.parseFloat(formatted).toFixed(4),
+              isLoading: false,
+            }
+          } catch (error) {
+            console.error(`[v0] Error fetching balance for ${token.symbol}:`, error)
+            return {
+              ...token,
+              balance: "0",
+              balanceFormatted: "0",
+              isLoading: false,
+            }
+          }
+        })
+      )
+
+      setTokens(tokenBalances)
+    } catch (error) {
+      console.error("[v0] Error refreshing token balances:", error)
+      setTokens([])
+    }
+  }
+
+  const addCustomToken = async (tokenAddress: string) => {
+    if (!ethers.isAddress(tokenAddress)) {
+      throw new Error("Invalid token address")
+    }
+
+    // Check if token already exists
+    const existingToken = 
+      [...getTokensForChain(chainId), ...customTokens].find(
+        (t) => t.address.toLowerCase() === tokenAddress.toLowerCase() && t.chainId === chainId
+      )
+    
+    if (existingToken) {
+      throw new Error("Token already added")
+    }
+
+    try {
+      const provider = getProvider()
+      if (!provider) throw new Error("No provider available")
+
+      const contract = new ethers.Contract(tokenAddress, ERC20_ABI, provider)
+      
+      // Fetch token details
+      const [name, symbol, decimals] = await Promise.all([
+        contract.name(),
+        contract.symbol(),
+        contract.decimals(),
+      ])
+
+      const newToken: Token = {
+        address: tokenAddress,
+        symbol,
+        name,
+        decimals: Number(decimals),
+        chainId,
+        isCustom: true,
+      }
+
+      const updatedCustomTokens = [...customTokens, newToken]
+      setCustomTokens(updatedCustomTokens)
+      localStorage.setItem("custom_tokens", JSON.stringify(updatedCustomTokens))
+
+      // Refresh token balances to include new token
+      await refreshTokenBalances()
+    } catch (error) {
+      console.error("[v0] Error adding custom token:", error)
+      throw new Error("Failed to fetch token details. Make sure it's a valid ERC20 token.")
+    }
+  }
+
+  const removeToken = (tokenAddress: string) => {
+    const updatedCustomTokens = customTokens.filter(
+      (t) => t.address.toLowerCase() !== tokenAddress.toLowerCase()
+    )
+    setCustomTokens(updatedCustomTokens)
+    localStorage.setItem("custom_tokens", JSON.stringify(updatedCustomTokens))
+    
+    // Remove from current token list
+    setTokens((prev) => prev.filter((t) => t.address.toLowerCase() !== tokenAddress.toLowerCase()))
+  }
+
   return (
     <WalletContext.Provider
       value={{
@@ -321,6 +467,8 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
         isConnected: !!activeAccount,
         projectId,
         agentMode,
+        tokens,
+        customTokens,
         setAgentMode,
         createNewWallet,
         importWallet,
@@ -334,6 +482,9 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
         getProvider,
         refreshBalance,
         getAccountBalance,
+        addCustomToken,
+        removeToken,
+        refreshTokenBalances,
       }}
     >
       {children}

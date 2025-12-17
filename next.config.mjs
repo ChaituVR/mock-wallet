@@ -15,9 +15,6 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   
-  // Enable SWC minification
-  swcMinify: true,
-  
   // Optimize production builds
   productionBrowserSourceMaps: false,
   

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -31,9 +31,10 @@ import { NetworkManager } from "./network-manager"
 import { ChainInfo } from "./chain-info"
 import { WalletConnectConnector } from "./walletconnect-connector"
 import { AccountsManager } from "./accounts-manager"
+import { TokenList } from "./token-list"
 
 export function WalletDashboard() {
-  const { activeAccount: account, balance, chainId, refreshBalance, disconnectWallet } = useWallet()
+  const { activeAccount: account, balance, chainId, refreshBalance, disconnectWallet, refreshTokenBalances } = useWallet()
   const [copied, setCopied] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [showSendTx, setShowSendTx] = useState(false)
@@ -46,6 +47,13 @@ export function WalletDashboard() {
   if (typeof window !== 'undefined') {
     (window as any).setActiveTab = setActiveTab
   }
+
+  // Load token balances when switching to tokens tab or when chain/account changes
+  useEffect(() => {
+    if (activeTab === "tokens" && account) {
+      refreshTokenBalances()
+    }
+  }, [activeTab, chainId, account?.address])
 
 
   const copyAddress = async () => {
@@ -168,10 +176,14 @@ export function WalletDashboard() {
           </Card>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList className="grid w-full grid-cols-5 h-12 p-0 bg-muted border-2 border-black">
+            <TabsList className="grid w-full grid-cols-6 h-12 p-0 bg-muted border-2 border-black">
               <TabsTrigger value="actions" className="font-black uppercase data-[state=active]:bg-card">
                 <Sparkles className="w-4 h-4 mr-2 hidden sm:block" />
                 Actions
+              </TabsTrigger>
+              <TabsTrigger value="tokens" className="font-black uppercase data-[state=active]:bg-card">
+                <Wallet className="w-4 h-4 mr-2 hidden sm:block" />
+                Tokens
               </TabsTrigger>
               <TabsTrigger value="walletconnect" className="font-black uppercase data-[state=active]:bg-card">
                 <Link2 className="w-4 h-4 mr-2 hidden sm:block" />
@@ -274,6 +286,10 @@ export function WalletDashboard() {
                   </div>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="tokens" className="space-y-4">
+              <TokenList />
             </TabsContent>
 
             <TabsContent value="walletconnect">
