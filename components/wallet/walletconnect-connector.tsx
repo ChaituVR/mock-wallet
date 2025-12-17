@@ -53,6 +53,28 @@ export function WalletConnectConnector() {
     chainIdRef.current = chainId
   }, [chainId])
 
+  // Update WalletConnect sessions when account or chain changes
+  useEffect(() => {
+    const updateSessions = async () => {
+      if (!activeAccount || initStatus !== "ready") return
+      
+      try {
+        const activeSessions = wcManager.getActiveSessions()
+        const sessionCount = Object.keys(activeSessions).length
+        
+        if (sessionCount > 0) {
+          console.log("[v0] Account or chain changed, updating WalletConnect sessions...")
+          await wcManager.updateSessionAccount(activeAccount.address, chainId)
+          console.log("[v0] All sessions updated with new account/chain")
+        }
+      } catch (err) {
+        console.error("[v0] Failed to update sessions:", err)
+      }
+    }
+
+    updateSessions()
+  }, [activeAccount?.address, chainId, initStatus])
+
   // Auto-connect when WC URI is pasted in agent mode
   useEffect(() => {
     if (agentMode && wcUri.trim() && activeAccount && initStatus === "ready" && !isConnecting) {

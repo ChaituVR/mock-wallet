@@ -396,6 +396,63 @@ export class WalletConnectManager {
     }
   }
 
+  async updateSessionAccount(newAccount: string, chainId: number): Promise<void> {
+    if (!this.walletKit) {
+      throw new Error("WalletKit not initialized")
+    }
+
+    try {
+      const sessions = this.walletKit.getActiveSessions()
+      
+      for (const [topic, session] of Object.entries(sessions)) {
+        console.log("[v0] Updating session account for topic:", topic)
+        
+        // Update the session with new account
+        const updatedNamespaces = {
+          ...session.namespaces,
+          eip155: {
+            ...session.namespaces.eip155,
+            accounts: [
+              `eip155:${chainId}:${newAccount}`,
+              `eip155:1:${newAccount}`,
+              `eip155:11155111:${newAccount}`,
+              `eip155:137:${newAccount}`,
+              `eip155:80002:${newAccount}`,
+              `eip155:8453:${newAccount}`,
+              `eip155:84532:${newAccount}`,
+              `eip155:42161:${newAccount}`,
+              `eip155:421614:${newAccount}`,
+              `eip155:10:${newAccount}`,
+              `eip155:11155420:${newAccount}`,
+            ],
+          },
+        }
+
+        await this.walletKit.updateSession({
+          topic,
+          namespaces: updatedNamespaces,
+        })
+
+        // Emit accountsChanged event
+        await this.walletKit.emitSessionEvent({
+          topic,
+          event: {
+            name: "accountsChanged",
+            data: [newAccount],
+          },
+          chainId: `eip155:${chainId}`,
+        })
+
+        console.log("[v0] Session updated with new account:", newAccount)
+      }
+      
+      this.emit("session_update", { account: newAccount, chainId })
+    } catch (error) {
+      console.error("[v0] Update session account error:", error)
+      throw error
+    }
+  }
+
   getPendingRequests(): WCRequest[] {
     return Array.from(this.pendingRequests.values())
   }

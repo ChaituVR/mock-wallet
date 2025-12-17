@@ -20,7 +20,7 @@ interface WalletContextType {
   importWallet: (privateKeyOrMnemonicOrAddress: string) => void
   addWallet: (privateKeyOrMnemonicOrAddress: string) => void
   addAccountFromSeed: () => void
-  switchAccount: (index: number) => void
+  switchAccount: (index: number) => Promise<void>
   disconnectWallet: () => void
   switchChain: (chainId: number) => Promise<void>
   setProjectId: (id: string) => void
@@ -244,10 +244,15 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
     setActiveAccountIndex(newAccounts.length - 1)
   }
 
-  const switchAccount = (index: number) => {
+  const switchAccount = async (index: number) => {
     if (index >= 0 && index < accounts.length) {
       WalletManager.setActiveAccountIndex(index)
       setActiveAccountIndex(index)
+      
+      // Refresh balance for new account
+      setTimeout(() => {
+        refreshBalance()
+      }, 100)
     }
   }
 
