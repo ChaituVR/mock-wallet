@@ -84,27 +84,27 @@ export function WalletDashboard() {
         <main className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
           <Card className="brutalist-border bg-card overflow-hidden">
             <CardHeader className="pb-3 relative border-b-2 border-black">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-primary flex items-center justify-center border-2 border-black">
-                    <Wallet className="w-7 h-7 text-primary-foreground" />
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 bg-primary flex items-center justify-center border-2 border-black flex-shrink-0">
+                    <Wallet className="w-6 h-6 sm:w-7 sm:h-7 text-primary-foreground" />
                   </div>
-                  <div>
-                    <CardTitle className="text-base font-black uppercase">Total Balance</CardTitle>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="outline" className="text-xs border-2 border-black font-black uppercase">
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="text-sm sm:text-base font-black uppercase truncate">Total Balance</CardTitle>
+                    <div className="flex items-center gap-1 sm:gap-2 mt-1 flex-wrap">
+                      <Badge variant="outline" className="text-[10px] sm:text-xs border-2 border-black font-black uppercase">
                         {chain?.name || "Unknown"}
                       </Badge>
                       <Badge
                         variant="outline"
-                        className="text-xs border-2 border-black font-black uppercase bg-secondary"
+                        className="text-[10px] sm:text-xs border-2 border-black font-black uppercase bg-secondary"
                       >
                         Testnet
                       </Badge>
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 flex-shrink-0">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -176,29 +176,29 @@ export function WalletDashboard() {
           </Card>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList className="grid w-full grid-cols-6 h-12 p-0 bg-muted border-2 border-black">
-              <TabsTrigger value="actions" className="font-black uppercase data-[state=active]:bg-card">
-                <Sparkles className="w-4 h-4 mr-2 hidden sm:block" />
+            <TabsList className="w-full h-12 p-0 bg-muted border-2 border-black overflow-x-auto flex sm:grid sm:grid-cols-6">
+              <TabsTrigger value="actions" className="font-black text-xs sm:text-sm uppercase data-[state=active]:bg-card flex-shrink-0 px-3 sm:px-4">
+                <Sparkles className="w-4 h-4 mr-1 sm:mr-2 hidden sm:block" />
                 Actions
               </TabsTrigger>
-              <TabsTrigger value="tokens" className="font-black uppercase data-[state=active]:bg-card">
-                <Wallet className="w-4 h-4 mr-2 hidden sm:block" />
+              <TabsTrigger value="tokens" className="font-black text-xs sm:text-sm uppercase data-[state=active]:bg-card flex-shrink-0 px-3 sm:px-4">
+                <Wallet className="w-4 h-4 mr-1 sm:mr-2 hidden sm:block" />
                 Tokens
               </TabsTrigger>
-              <TabsTrigger value="walletconnect" className="font-black uppercase data-[state=active]:bg-card">
-                <Link2 className="w-4 h-4 mr-2 hidden sm:block" />
+              <TabsTrigger value="walletconnect" className="font-black text-xs sm:text-sm uppercase data-[state=active]:bg-card flex-shrink-0 px-3 sm:px-4">
+                <Link2 className="w-4 h-4 mr-1 sm:mr-2 hidden sm:block" />
                 Connect
               </TabsTrigger>
-              <TabsTrigger value="networks" className="font-black uppercase data-[state=active]:bg-card">
-                <Network className="w-4 h-4 mr-2 hidden sm:block" />
+              <TabsTrigger value="networks" className="font-black text-xs sm:text-sm uppercase data-[state=active]:bg-card flex-shrink-0 px-3 sm:px-4">
+                <Network className="w-4 h-4 mr-1 sm:mr-2 hidden sm:block" />
                 Networks
               </TabsTrigger>
-              <TabsTrigger value="accounts" className="font-black uppercase data-[state=active]:bg-card">
-                <Users className="w-4 h-4 mr-2 hidden sm:block" />
+              <TabsTrigger value="accounts" className="font-black text-xs sm:text-sm uppercase data-[state=active]:bg-card flex-shrink-0 px-3 sm:px-4">
+                <Users className="w-4 h-4 mr-1 sm:mr-2 hidden sm:block" />
                 Accounts
               </TabsTrigger>
-              <TabsTrigger value="account" className="font-black uppercase data-[state=active]:bg-card">
-                <Key className="w-4 h-4 mr-2 hidden sm:block" />
+              <TabsTrigger value="account" className="font-black text-xs sm:text-sm uppercase data-[state=active]:bg-card flex-shrink-0 px-3 sm:px-4">
+                <Key className="w-4 h-4 mr-1 sm:mr-2 hidden sm:block" />
                 Account
               </TabsTrigger>
             </TabsList>

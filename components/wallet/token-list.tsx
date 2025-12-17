@@ -4,7 +4,7 @@ import { useWallet } from "@/lib/wallet/wallet-provider"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Coins, Plus, ExternalLink, Trash2, Loader2, Copy } from "lucide-react"
+import { Coins, Plus, ExternalLink, Trash2, Loader2, Copy, RefreshCcw } from "lucide-react"
 import { useState } from "react"
 import { AddTokenDialog } from "./add-token-dialog"
 import { SUPPORTED_CHAINS } from "@/lib/wallet/chain-config"
@@ -15,8 +15,8 @@ export function TokenList() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null)
 
-  const chain = SUPPORTED_CHAINS.find((c) => c.id === chainId)
-  const explorerUrl = chain?.blockExplorer || ""
+  const chain = SUPPORTED_CHAINS.find((c) => c.chainId === chainId)
+  const explorerUrl = chain?.blockExplorers?.default?.url || ""
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
@@ -64,25 +64,26 @@ export function TokenList() {
                 size="sm"
                 onClick={handleRefresh}
                 disabled={isRefreshing}
-                className="border-2 border-black dark:border-white font-bold"
+                className="border-2 border-black dark:border-white font-bold text-xs sm:text-sm"
               >
                 {isRefreshing ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                    Refreshing
+                    <span className="hidden sm:inline">Refreshing</span>
                   </>
                 ) : (
-                  "Refresh"
+                  <span className="hidden sm:inline">Refresh</span>
                 )}
+                {!isRefreshing && <RefreshCcw className="w-4 h-4 sm:hidden" />}
               </Button>
               <Button
                 variant="default"
                 size="sm"
                 onClick={() => setIsAddTokenOpen(true)}
-                className="border-2 border-black font-bold"
+                className="border-2 border-black font-bold text-xs sm:text-sm"
               >
-                <Plus className="w-4 h-4 mr-1" />
-                Add Token
+                <Plus className="w-4 h-4 mr-0 sm:mr-1" />
+                <span className="hidden sm:inline">Add Token</span>
               </Button>
             </div>
           </div>
@@ -111,8 +112,8 @@ export function TokenList() {
                   key={`${token.chainId}-${token.address}`}
                   className="p-4 hover:bg-muted/50 transition-colors"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 flex-1">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
                       {token.logoURI ? (
                         <img
                           src={token.logoURI}
@@ -137,7 +138,7 @@ export function TokenList() {
                           )}
                         </div>
                         <p className="text-xs font-mono text-muted-foreground">{token.name}</p>
-                        <div className="flex items-center gap-1 mt-1">
+                        <div className="flex items-center gap-1.5 mt-1">
                           <code className="text-[10px] font-mono text-muted-foreground">
                             {token.address.slice(0, 6)}...{token.address.slice(-4)}
                           </code>
@@ -154,11 +155,22 @@ export function TokenList() {
                               <Copy className="w-3 h-3" />
                             )}
                           </Button>
+                          {explorerUrl && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-4 w-4 p-0 hover:bg-transparent"
+                              onClick={() => window.open(getTokenExplorerUrl(token.address), "_blank")}
+                              title="View on explorer"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>
-                    <div className="text-right flex items-center gap-2">
-                      <div>
+                    <div className="flex items-center justify-between sm:justify-end gap-3">
+                      <div className="text-right">
                         {token.isLoading ? (
                           <div className="flex items-center gap-2 text-muted-foreground">
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -171,23 +183,12 @@ export function TokenList() {
                           </>
                         )}
                       </div>
-                      <div className="flex items-center gap-1 ml-2">
-                        {explorerUrl && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                            onClick={() => window.open(getTokenExplorerUrl(token.address), "_blank")}
-                            title="View on explorer"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </Button>
-                        )}
+                      <div className="flex items-center gap-1">
                         {token.isCustom && (
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
                             onClick={() => handleRemoveToken(token.address)}
                             title="Remove token"
                           >
