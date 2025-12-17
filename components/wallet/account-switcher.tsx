@@ -5,7 +5,24 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useWallet } from "@/lib/wallet/wallet-provider"
 import { WalletManager } from "@/lib/wallet/wallet-manager"
-import { Check, Plus, Eye, Wallet, Download, AlertCircle, Users, Upload } from "lucide-react"
+import { Check, Plus, Eye, Wallet, Download, AlertCircle, Users, Upload, GripVertical } from "lucide-react"
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core"
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,8 +39,68 @@ import {
 } from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
+interface SortableAccountItemProps {
+  account: any
+  index: number
+  activeAccountIndex: number
+  balance: string
+  onSwitch: (index: number) => void
+}
+
+function SortableAccountItem({ account, index, activeAccountIndex, balance, onSwitch }: SortableAccountItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: account.address })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-2 p-3 font-mono cursor-pointer border-2 border-transparent hover:border-foreground hover:bg-accent mb-1 rounded"
+    >
+      <div
+        {...attributes}
+        {...listeners}
+        className="flex-shrink-0 cursor-grab active:cursor-grabbing touch-none"
+      >
+        <GripVertical className="w-4 h-4 text-muted-foreground" />
+      </div>
+      <div
+        onClick={() => onSwitch(index)}
+        className="flex items-center gap-3 flex-1 min-w-0"
+      >
+        <div className="flex-shrink-0">
+          {account.isWatchOnly ? <Eye className="w-4 h-4" /> : <Wallet className="w-4 h-4" />}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-xs truncate">{account.label || "Account"}</span>
+            {account.isWatchOnly && (
+              <span className="text-[10px] px-1.5 py-0.5 bg-muted border border-foreground">WATCH</span>
+            )}
+          </div>
+          <div className="text-xs text-muted-foreground truncate">{account.address}</div>
+          <div className="text-xs font-bold mt-0.5">{balance || "..."} ETH</div>
+        </div>
+        {index === activeAccountIndex && <Check className="w-4 h-4 flex-shrink-0 text-primary" />}
+      </div>
+    </div>
+  )
+}
+
 export function AccountSwitcher() {
-  const { accounts, activeAccountIndex, switchAccount, addAccountFromSeed, addWallet, getAccountBalance } =
+  const { accounts, activeAccountIndex, switchAccount, reorderAccounts, addAccountFromSeed, addWallet, getAccountBalance } =
     useWallet()
   const [balances, setBalances] = useState<Record<string, string>>({})
   const [showImportDialog, setShowImportDialog] = useState(false)
@@ -59,6 +136,25 @@ export function AccountSwitcher() {
 
   const activeAccount = accounts[activeAccountIndex]
   const canAddAccount = activeAccount?.mnemonic
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (over && active.id !== over.id) {
+      const oldIndex = accounts.findIndex((account) => account.address === active.id)
+      const newIndex = accounts.findIndex((account) => account.address === over.id)
+
+      const newOrder = arrayMove(accounts, oldIndex, newIndex)
+      reorderAccounts(newOrder)
+    }
+  }
 
   const handleAddAccount = () => {
     try {
@@ -287,29 +383,30 @@ export function AccountSwitcher() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-72 border-[3px] border-foreground bg-card p-2">
-        <div className="px-2 py-1.5 text-xs font-black uppercase text-muted-foreground">Accounts</div>
-        {accounts.map((account, index) => (
-          <DropdownMenuItem
-            key={account.address}
-            onClick={() => switchAccount(index)}
-            className="flex items-center gap-3 p-3 font-mono cursor-pointer border-2 border-transparent hover:border-foreground hover:bg-accent mb-1"
+        <div className="px-2 py-1.5 text-xs font-black uppercase text-muted-foreground">
+          Accounts (Drag to reorder)
+        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={accounts.map((account) => account.address)}
+            strategy={verticalListSortingStrategy}
           >
-            <div className="flex-shrink-0">
-              {account.isWatchOnly ? <Eye className="w-4 h-4" /> : <Wallet className="w-4 h-4" />}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-xs truncate">{account.label || "Account"}</span>
-                {account.isWatchOnly && (
-                  <span className="text-[10px] px-1.5 py-0.5 bg-muted border border-foreground">WATCH</span>
-                )}
-              </div>
-              <div className="text-xs text-muted-foreground truncate">{account.address}</div>
-              <div className="text-xs font-bold mt-0.5">{balances[account.address] || "..."} ETH</div>
-            </div>
-            {index === activeAccountIndex && <Check className="w-4 h-4 flex-shrink-0 text-primary" />}
-          </DropdownMenuItem>
-        ))}
+            {accounts.map((account, index) => (
+              <SortableAccountItem
+                key={account.address}
+                account={account}
+                index={index}
+                activeAccountIndex={activeAccountIndex}
+                balance={balances[account.address]}
+                onSwitch={switchAccount}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
 
         <DropdownMenuSeparator className="my-2 bg-foreground h-[2px]" />
 

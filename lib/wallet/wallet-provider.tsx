@@ -21,6 +21,7 @@ interface WalletContextType {
   addWallet: (privateKeyOrMnemonicOrAddress: string) => void
   addAccountFromSeed: () => void
   switchAccount: (index: number) => Promise<void>
+  reorderAccounts: (newOrder: WalletAccount[]) => void
   disconnectWallet: () => void
   switchChain: (chainId: number) => Promise<void>
   setProjectId: (id: string) => void
@@ -256,6 +257,24 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
     }
   }
 
+  const reorderAccounts = (newOrder: WalletAccount[]) => {
+    // Find the current active account in the new order
+    const currentActiveAccount = accounts[activeAccountIndex]
+    const newActiveIndex = newOrder.findIndex(
+      (account) => account.address === currentActiveAccount?.address
+    )
+    
+    // Update accounts and save
+    WalletManager.saveAccounts(newOrder)
+    setAccounts(newOrder)
+    
+    // Update active index if found
+    if (newActiveIndex !== -1) {
+      WalletManager.setActiveAccountIndex(newActiveIndex)
+      setActiveAccountIndex(newActiveIndex)
+    }
+  }
+
   const disconnectWallet = () => {
     if (accounts.length <= 1) {
       // If only one account, clear all
@@ -308,6 +327,7 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
         addWallet,
         addAccountFromSeed,
         switchAccount,
+        reorderAccounts,
         disconnectWallet,
         switchChain,
         setProjectId,
