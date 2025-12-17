@@ -1,13 +1,54 @@
 {
-  "name": "my-v0-project",
-  "version": "0.1.0",
+  "name": "mock-wallet",
+  "version": "1.0.0",
+  "description": "Professional Web3 development wallet with multi-account management, WalletConnect integration, and comprehensive testnet support for blockchain developers",
+  "keywords": [
+    "web3",
+    "ethereum",
+    "wallet",
+    "blockchain",
+    "cryptocurrency",
+    "walletconnect",
+    "developer-tools",
+    "testnet",
+    "dapp",
+    "testing",
+    "multi-account",
+    "HD-wallet",
+    "ethers",
+    "nextjs",
+    "react",
+    "typescript",
+    "defi",
+    "nft",
+    "smart-contracts"
+  ],
+  "author": {
+    "name": "Mock Wallet Team",
+    "url": "https://mockwallet.dev"
+  },
+  "homepage": "https://mockwallet.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ChaituVR/mock-wallet.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ChaituVR/mock-wallet/issues"
+  },
+  "license": "MIT",
   "private": true,
   "packageManager": "bun@1.1.38",
+  "engines": {
+    "node": ">=18.0.0",
+    "bun": ">=1.0.0"
+  },
   "scripts": {
     "build": "next build",
     "dev": "next dev",
     "lint": "eslint .",
-    "start": "next start"
+    "start": "next start",
+    "analyze": "ANALYZE=true next build",
+    "postbuild": "next-sitemap"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

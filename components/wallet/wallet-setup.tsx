@@ -58,6 +58,13 @@ export function WalletSetup() {
             </div>
           </div>
 
+          <Alert className="mb-6 brutalist-border border-4 border-red-600 bg-red-50 dark:bg-red-950/20">
+            <AlertCircle className="h-5 w-5 text-red-600" />
+            <AlertDescription className="text-red-900 dark:text-red-300 font-bold text-base">
+              ⚠️ Security Warning: Use only test seed phrases and private keys. Never use real accounts with actual tokens or value. This wallet is for development and testing purposes only.
+            </AlertDescription>
+          </Alert>
+
           <div className="text-center mb-8">
             <Badge variant="outline" className="mb-4 px-3 py-1 border-2 border-black font-black uppercase">
               <Sparkles className="w-3 h-3 mr-1" />

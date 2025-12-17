@@ -1,0 +1,23 @@
+/* TEAM */
+Developer: Mock Wallet Team
+Site: https://mockwallet.dev
+Location: Global
+
+/* THANKS */
+Web3 Community
+Reown (WalletConnect)
+Vercel
+v0.app by Vercel
+Ethereum Foundation
+
+/* SITE */
+Last update: 2025/12/17
+Standards: HTML5, CSS3, ES2024
+Components: React, Next.js, TypeScript
+Software: Bun, ethers.js, Tailwind CSS
+Languages: TypeScript, JavaScript
+
+/* MISSION */
+Building the best Web3 development tools for blockchain developers.
+Making dApp testing easier, faster, and more reliable.
+Empowering developers to build the decentralized future.
