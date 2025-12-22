@@ -4,17 +4,23 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Label } from "@/components/ui/label"
 import { useWallet } from "@/lib/wallet/wallet-provider"
 import { WalletManager } from "@/lib/wallet/wallet-manager"
-import { Wallet, Eye, Copy, Check, Trash2, Download } from "lucide-react"
+import { Wallet, Eye, EyeOff, Copy, Check, Trash2, Download, Loader2, Key, FileText } from "lucide-react"
 
 export function AccountsManager() {
   const { accounts, activeAccountIndex, switchAccount, getAccountBalance } = useWallet()
   const [balances, setBalances] = useState<Record<string, string>>({})
+  const [loadingBalances, setLoadingBalances] = useState(false)
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null)
+  const [showPrivateKey, setShowPrivateKey] = useState<Record<string, boolean>>({})
+  const [showMnemonic, setShowMnemonic] = useState<Record<string, boolean>>({})
+  const [copiedSecret, setCopiedSecret] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchBalances = async () => {
+      setLoadingBalances(true)
       try {
         const newBalances: Record<string, string> = {}
         for (const account of accounts) {
@@ -29,6 +35,8 @@ export function AccountsManager() {
         setBalances(newBalances)
       } catch (error) {
         console.error("Error in fetchBalances:", error)
+      } finally {
+        setLoadingBalances(false)
       }
     }
 
@@ -41,6 +49,20 @@ export function AccountsManager() {
     await navigator.clipboard.writeText(address)
     setCopiedAddress(address)
     setTimeout(() => setCopiedAddress(null), 2000)
+  }
+
+  const copySecret = async (text: string, id: string) => {
+    await navigator.clipboard.writeText(text)
+    setCopiedSecret(id)
+    setTimeout(() => setCopiedSecret(null), 2000)
+  }
+
+  const togglePrivateKey = (address: string) => {
+    setShowPrivateKey(prev => ({ ...prev, [address]: !prev[address] }))
+  }
+
+  const toggleMnemonic = (address: string) => {
+    setShowMnemonic(prev => ({ ...prev, [address]: !prev[address] }))
   }
 
   const getTotalBalance = () => {
@@ -123,7 +145,14 @@ export function AccountsManager() {
           <CardTitle className="text-lg font-black uppercase">Total Balance</CardTitle>
         </CardHeader>
         <CardContent className="pt-4">
-          <div className="text-4xl font-black font-mono">{getTotalBalance()} ETH</div>
+          {loadingBalances ? (
+            <div className="flex items-center gap-3">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <span className="text-lg text-muted-foreground font-mono">Loading balances...</span>
+            </div>
+          ) : (
+            <div className="text-4xl font-black font-mono">{getTotalBalance()} ETH</div>
+          )}
           <p className="text-sm font-mono font-bold text-muted-foreground mt-1">
             Across {accounts.length} {accounts.length === 1 ? "account" : "accounts"}
           </p>
@@ -134,8 +163,8 @@ export function AccountsManager() {
         {accounts.map((account, index) => (
           <Card
             key={account.address}
-            className={`brutalist-border transition-all ${
-              index === activeAccountIndex ? "border-primary border-4" : "border-foreground border-2"
+            className={`brutalist-border transition-all duration-300 hover:shadow-xl ${
+              index === activeAccountIndex ? "border-primary border-4 shadow-lg scale-[1.01]" : "border-foreground border-2 hover:border-primary/50"
             }`}
           >
             <CardHeader className="pb-3 border-b-2 border-foreground">
@@ -199,11 +228,18 @@ export function AccountsManager() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="pt-4">
+            <CardContent className="pt-4 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-mono font-bold text-muted-foreground uppercase mb-1">Balance</p>
-                  <p className="text-2xl font-black font-mono">{balances[account.address] || "..."} ETH</p>
+                  {loadingBalances ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground font-mono">Loading...</span>
+                    </div>
+                  ) : (
+                    <p className="text-2xl font-black font-mono">{balances[account.address] || "..."} ETH</p>
+                  )}
                 </div>
                 {index !== activeAccountIndex && (
                   <Button
@@ -215,6 +251,100 @@ export function AccountsManager() {
                   </Button>
                 )}
               </div>
+
+              {/* Show Private Key/Mnemonic for non-watch-only accounts */}
+              {!account.isWatchOnly && (
+                <div className="border-t-2 border-foreground pt-4 space-y-3">
+                  {/* Private Key */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="font-mono uppercase text-xs font-black flex items-center gap-2">
+                        <Key className="h-3 w-3" />
+                        Private Key
+                      </Label>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => togglePrivateKey(account.address)}
+                          className="h-7 px-2 font-mono text-xs border border-foreground"
+                        >
+                          {showPrivateKey[account.address] ? (
+                            <><EyeOff className="h-3 w-3 mr-1" />Hide</>
+                          ) : (
+                            <><Eye className="h-3 w-3 mr-1" />Show</>
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => account.privateKey && copySecret(account.privateKey, `pk-${account.address}`)}
+                          className="h-7 px-2 border border-foreground"
+                        >
+                          {copiedSecret === `pk-${account.address}` ? (
+                            <Check className="h-3 w-3 text-green-500" />
+                          ) : (
+                            <Copy className="h-3 w-3" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                    <code className="block w-full p-2 bg-muted border-2 border-foreground font-mono text-xs break-all">
+                      {showPrivateKey[account.address] 
+                        ? account.privateKey 
+                        : "•".repeat(account.privateKey?.length || 64)}
+                    </code>
+                  </div>
+
+                  {/* Mnemonic if available */}
+                  {account.mnemonic && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="font-mono uppercase text-xs font-black flex items-center gap-2">
+                          <FileText className="h-3 w-3" />
+                          Seed Phrase
+                        </Label>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleMnemonic(account.address)}
+                            className="h-7 px-2 font-mono text-xs border border-foreground"
+                          >
+                            {showMnemonic[account.address] ? (
+                              <><EyeOff className="h-3 w-3 mr-1" />Hide</>
+                            ) : (
+                              <><Eye className="h-3 w-3 mr-1" />Show</>
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copySecret(account.mnemonic!, `mn-${account.address}`)}
+                            className="h-7 px-2 border border-foreground"
+                          >
+                            {copiedSecret === `mn-${account.address}` ? (
+                              <Check className="h-3 w-3 text-green-500" />
+                            ) : (
+                              <Copy className="h-3 w-3" />
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                      <code className="block w-full p-2 bg-muted border-2 border-foreground font-mono text-xs break-all">
+                        {showMnemonic[account.address] 
+                          ? account.mnemonic 
+                          : "•".repeat(account.mnemonic?.length || 120)}
+                      </code>
+                      {account.derivationIndex !== undefined && (
+                        <p className="text-xs font-mono text-muted-foreground">
+                          Derivation Index: {account.derivationIndex}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}

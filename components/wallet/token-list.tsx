@@ -46,14 +46,16 @@ export function TokenList() {
 
   return (
     <>
-      <Card className="brutalist-border">
-        <CardHeader className="border-b-2 border-black dark:border-white bg-muted/50">
+      <Card className="brutalist-border shadow-2xl bg-gradient-to-br from-card to-primary/5 border-[3px] border-black">
+        <CardHeader className="border-b-2 border-black dark:border-white bg-gradient-to-r from-muted/50 via-primary/5 to-primary/10">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Coins className="w-5 h-5" />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center border-2 border-black shadow-md">
+                <Coins className="w-5 h-5 text-primary-foreground" />
+              </div>
               <div>
                 <CardTitle className="text-xl font-black uppercase">Tokens</CardTitle>
-                <CardDescription className="font-mono text-xs mt-1">
+                <CardDescription className="font-mono text-xs mt-1 font-semibold">
                   ERC20 token balances
                 </CardDescription>
               </div>
@@ -64,7 +66,7 @@ export function TokenList() {
                 size="sm"
                 onClick={handleRefresh}
                 disabled={isRefreshing}
-                className="border-2 border-black dark:border-white font-bold text-xs sm:text-sm"
+                className="border-2 border-black dark:border-white font-extrabold text-xs sm:text-sm hover:bg-primary/10 transition-colors"
               >
                 {isRefreshing ? (
                   <>
@@ -80,7 +82,7 @@ export function TokenList() {
                 variant="default"
                 size="sm"
                 onClick={() => setIsAddTokenOpen(true)}
-                className="border-2 border-black font-bold text-xs sm:text-sm"
+                className="border-2 border-black font-extrabold text-xs sm:text-sm bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-md transition-all"
               >
                 <Plus className="w-4 h-4 mr-0 sm:mr-1" />
                 <span className="hidden sm:inline">Add Token</span>

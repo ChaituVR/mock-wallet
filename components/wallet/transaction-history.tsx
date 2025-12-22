@@ -29,7 +29,7 @@ interface Transaction {
 }
 
 export function TransactionHistory({ open, onOpenChange }: TransactionHistoryProps) {
-  const { account, getProvider, chainId } = useWallet()
+  const { activeAccount: account, getProvider, chainId } = useWallet()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
@@ -125,13 +125,15 @@ export function TransactionHistory({ open, onOpenChange }: TransactionHistoryPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <History className="h-5 w-5" />
+      <DialogContent className="max-w-2xl max-h-[80vh] border-[3px] border-foreground shadow-2xl bg-gradient-to-br from-background via-primary/5 to-background">
+        <DialogHeader className="border-b-2 border-foreground pb-4">
+          <DialogTitle className="flex items-center gap-3 font-mono uppercase font-black text-lg">
+            <div className="w-10 h-10 bg-gradient-to-br from-foreground to-foreground/80 flex items-center justify-center border-2 border-black shadow-md">
+              <History className="h-5 w-5 text-background" />
+            </div>
             Transaction History
           </DialogTitle>
-          <DialogDescription>Recent transactions on {chain?.name}</DialogDescription>
+          <DialogDescription className="font-mono text-xs font-semibold mt-2 uppercase">Recent transactions on {chain?.name}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -156,7 +158,7 @@ export function TransactionHistory({ open, onOpenChange }: TransactionHistoryPro
                 {transactions.map((tx) => (
                   <div
                     key={tx.hash}
-                    className="flex items-start gap-3 p-4 bg-muted/30 rounded-lg border border-border/50 hover:border-primary/50 transition-colors"
+                    className="flex items-start gap-3 p-4 brutalist-border bg-card hover:border-primary hover:shadow-xl hover:scale-[1.01] transition-all duration-300"
                   >
                     <div
                       className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${

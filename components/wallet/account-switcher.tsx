@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useWallet } from "@/lib/wallet/wallet-provider"
 import { WalletManager } from "@/lib/wallet/wallet-manager"
-import { Check, Plus, Eye, Wallet, Download, AlertCircle, Users, Upload, GripVertical } from "lucide-react"
+import { Check, Plus, Eye, Wallet, Download, AlertCircle, Users, Upload, GripVertical, Sparkles } from "lucide-react"
 import {
   DndContext,
   closestCenter,
@@ -72,7 +72,7 @@ function SortableAccountItem({ account, index, activeAccountIndex, balance, onSw
       <div
         {...attributes}
         {...listeners}
-        className="flex-shrink-0 cursor-grab active:cursor-grabbing touch-none"
+        className="shrink-0 cursor-grab active:cursor-grabbing touch-none"
       >
         <GripVertical className="w-4 h-4 text-muted-foreground" />
       </div>
@@ -80,7 +80,7 @@ function SortableAccountItem({ account, index, activeAccountIndex, balance, onSw
         onClick={() => onSwitch(index)}
         className="flex items-center gap-3 flex-1 min-w-0"
       >
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           {account.isWatchOnly ? <Eye className="w-4 h-4" /> : <Wallet className="w-4 h-4" />}
         </div>
         <div className="flex-1 min-w-0">
@@ -98,7 +98,7 @@ function SortableAccountItem({ account, index, activeAccountIndex, balance, onSw
           <div className="text-xs text-muted-foreground truncate">{account.address}</div>
           <div className="text-xs font-bold mt-0.5">{balance || "..."} ETH</div>
         </div>
-        {index === activeAccountIndex && <Check className="w-4 h-4 flex-shrink-0 text-primary" />}
+        {index === activeAccountIndex && <Check className="w-4 h-4 shrink-0 text-primary" />}
       </div>
     </div>
   )
@@ -177,6 +177,15 @@ export function AccountSwitcher() {
       setShowImportDialog(false)
     } catch (error) {
       setImportError(error instanceof Error ? error.message : "Failed to import wallet")
+    }
+  }
+
+  const handleGenerateSeedPhrase = () => {
+    // Generate a new random wallet and extract the mnemonic
+    const newWallet = WalletManager.createWallet(0)
+    if (newWallet.mnemonic) {
+      setImportValue(newWallet.mnemonic)
+      setImportError("")
     }
   }
 
@@ -291,15 +300,27 @@ export function AccountSwitcher() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <Input
-                placeholder="Private key, mnemonic, ENS name (e.g. vitalik.eth), or 0x address..."
-                value={importValue}
-                onChange={(e) => {
-                  setImportValue(e.target.value)
-                  setImportError("")
-                }}
-                className="font-mono text-sm border-2 border-foreground"
-              />
+              <div className="space-y-2">
+                <Input
+                  placeholder="Private key, mnemonic, ENS name (e.g. vitalik.eth), or 0x address..."
+                  value={importValue}
+                  onChange={(e) => {
+                    setImportValue(e.target.value)
+                    setImportError("")
+                  }}
+                  className="font-mono text-sm border-2 border-foreground"
+                />
+                <Button
+                  onClick={handleGenerateSeedPhrase}
+                  variant="outline"
+                  size="sm"
+                  className="w-full h-10 font-black uppercase border-2 border-foreground hover:bg-primary/10 transition-colors"
+                  type="button"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Generate New Seed Phrase
+                </Button>
+              </div>
               {importError && (
                 <Alert className="border-2 border-foreground bg-destructive">
                   <AlertCircle className="h-4 w-4 text-destructive-foreground" />
@@ -374,7 +395,7 @@ export function AccountSwitcher() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          className="gap-1 sm:gap-2 border-[3px] border-foreground font-black uppercase brutalist-shadow hover:bg-accent h-9 sm:h-11 bg-transparent px-2 sm:px-4 max-w-[200px] sm:max-w-none"
+          className="gap-1 sm:gap-2 border-3 border-foreground font-black uppercase brutalist-shadow hover:bg-accent h-9 sm:h-11 bg-transparent px-2 sm:px-4 max-w-50 sm:max-w-none"
         >
           <div className="flex items-center gap-1 sm:gap-2 min-w-0">
             {activeAccount.isWatchOnly ? (
@@ -417,7 +438,7 @@ export function AccountSwitcher() {
           </SortableContext>
         </DndContext>
 
-        <DropdownMenuSeparator className="my-2 bg-foreground h-[2px]" />
+        <DropdownMenuSeparator className="my-2 bg-foreground h-0.5" />
 
         <DropdownMenuItem
           onSelect={() => {
@@ -467,15 +488,27 @@ export function AccountSwitcher() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <Input
-              placeholder="Private key, mnemonic, ENS name (e.g. vitalik.eth), or 0x address..."
-              value={importValue}
-              onChange={(e) => {
-                setImportValue(e.target.value)
-                setImportError("")
-              }}
-              className="font-mono text-sm border-2 border-foreground"
-            />
+            <div className="space-y-2">
+              <Input
+                placeholder="Private key, mnemonic, ENS name (e.g. vitalik.eth), or 0x address..."
+                value={importValue}
+                onChange={(e) => {
+                  setImportValue(e.target.value)
+                  setImportError("")
+                }}
+                className="font-mono text-sm border-2 border-foreground"
+              />
+              <Button
+                onClick={handleGenerateSeedPhrase}
+                variant="outline"
+                size="sm"
+                className="w-full h-10 font-black uppercase border-2 border-foreground hover:bg-primary/10 transition-colors"
+                type="button"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Generate New Seed Phrase
+              </Button>
+            </div>
             {importError && (
               <Alert className="border-2 border-foreground bg-destructive">
                 <AlertCircle className="h-4 w-4 text-destructive-foreground" />

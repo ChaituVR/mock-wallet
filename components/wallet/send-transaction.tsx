@@ -126,13 +126,15 @@ export function SendTransaction({ open, onOpenChange }: SendTransactionProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md border-[3px] border-foreground shadow-brutal bg-background">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 font-mono uppercase font-black">
-            <Send className="h-5 w-5" />
+      <DialogContent className="max-w-md border-[3px] border-foreground shadow-2xl bg-gradient-to-br from-background via-primary/5 to-background">
+        <DialogHeader className="border-b-2 border-foreground pb-4">
+          <DialogTitle className="flex items-center gap-3 font-mono uppercase font-black text-lg">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center border-2 border-black shadow-md">
+              <Send className="h-5 w-5 text-primary-foreground" />
+            </div>
             SEND TRANSACTION
           </DialogTitle>
-          <DialogDescription className="font-mono text-xs">
+          <DialogDescription className="font-mono text-xs font-semibold mt-2">
             SEND {chain?.nativeCurrency.symbol} TO ANY ADDRESS ON {chain?.name.toUpperCase()}
           </DialogDescription>
         </DialogHeader>
@@ -246,18 +248,18 @@ export function SendTransaction({ open, onOpenChange }: SendTransactionProps) {
                 </Alert>
               )}
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 pt-2">
                 <Button
                   variant="outline"
                   onClick={handleClose}
-                  className="flex-1 bg-transparent border-[3px] border-foreground font-black uppercase"
+                  className="flex-1 bg-transparent border-[3px] border-foreground font-black uppercase hover:bg-muted transition-colors"
                   disabled={isLoading}
                 >
                   CANCEL
                 </Button>
                 <Button
                   onClick={sendTransaction}
-                  className="flex-1 border-[3px] border-foreground font-black uppercase"
+                  className="flex-1 border-[3px] border-foreground font-black uppercase bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary transition-all shadow-md"
                   disabled={isLoading || !recipient || !amount || isWatchOnly}
                 >
                   {isLoading ? (

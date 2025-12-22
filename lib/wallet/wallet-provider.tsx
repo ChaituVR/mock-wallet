@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { ethers } from "ethers"
 import { WalletManager, type WalletAccount } from "./wallet-manager"
-import { getChainRpcUrl } from "./chain-config"
+import { getChainRpcUrl, getChainById } from "./chain-config"
 import { useSearchParams } from "next/navigation"
 import { type Token, ERC20_ABI, getTokensForChain } from "./token-config"
 
@@ -18,6 +18,7 @@ interface WalletContextType {
   activeAccount: WalletAccount | null
   activeAccountIndex: number
   balance: string
+  balanceLoading: boolean
   chainId: number
   isConnected: boolean
   projectId: string
@@ -49,6 +50,7 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
   const [accounts, setAccounts] = useState<WalletAccount[]>([])
   const [activeAccountIndex, setActiveAccountIndex] = useState(0)
   const [balance, setBalance] = useState("0.0")
+  const [balanceLoading, setBalanceLoading] = useState(false)
   const [chainId, setChainId] = useState(11155111)
   const [projectId, setProjectIdState] = useState("")
   const [hasCheckedUrl, setHasCheckedUrl] = useState(false)
@@ -141,28 +143,36 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
     }
   }, [activeAccount, chainId, projectId])
 
-  const getProvider = (): ethers.JsonRpcProvider | null => {
-    const rpcUrl = getChainRpcUrl(chainId, projectId)
+  const getProvider = (targetChainId?: number): ethers.JsonRpcProvider | null => {
+    const rpcUrl = getChainRpcUrl(targetChainId ?? chainId, projectId)
     if (!rpcUrl) return null
     return new ethers.JsonRpcProvider(rpcUrl)
   }
 
-  const refreshBalance = async () => {
+  const refreshBalance = async (targetChainId?: number) => {
     if (!activeAccount) return
 
+    const useChainId = targetChainId ?? chainId
+    setBalanceLoading(true)
     try {
-      const provider = getProvider()
+      const provider = getProvider(useChainId)
       if (!provider) {
+        console.log("[v0] No provider available for chainId:", useChainId)
         setBalance("0.0")
         return
       }
 
+      console.log(`[v0] Fetching balance for ${activeAccount.address} on chain ${useChainId}`)
       const balanceWei = await provider.getBalance(activeAccount.address)
       const balanceEth = ethers.formatEther(balanceWei)
-      setBalance(Number.parseFloat(balanceEth).toFixed(4))
+      const formattedBalance = Number.parseFloat(balanceEth).toFixed(4)
+      console.log(`[v0] Balance on chain ${useChainId}: ${formattedBalance} ${getChainById(useChainId)?.nativeCurrency.symbol || 'ETH'}`)
+      setBalance(formattedBalance)
     } catch (error) {
       console.error("[v0] Error fetching balance:", error)
       setBalance("0.0")
+    } finally {
+      setBalanceLoading(false)
     }
   }
 
@@ -362,9 +372,11 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
   }
 
   const switchChain = async (newChainId: number) => {
+    console.log(`[v0] Switching chain from ${chainId} to ${newChainId}`)
     setChainId(newChainId)
     localStorage.setItem("selected_chain_id", newChainId.toString())
-    await refreshBalance()
+    await refreshBalance(newChainId)
+    console.log(`[v0] Chain switch complete to ${newChainId}`)
   }
 
   const setProjectId = (id: string) => {
@@ -503,6 +515,7 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
         activeAccount,
         activeAccountIndex,
         balance,
+        balanceLoading,
         chainId,
         isConnected: !!activeAccount,
         projectId,

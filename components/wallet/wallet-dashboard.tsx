@@ -16,14 +16,13 @@ import {
   Send,
   History,
   Network,
-  Key,
   ExternalLink,
   Link2,
   Sparkles,
   Users,
+  Loader2,
 } from "lucide-react"
 import { WalletHeader } from "./wallet-header"
-import { AccountDetails } from "./account-details"
 import { ChainSelector } from "./chain-selector"
 import { SendTransaction } from "./send-transaction"
 import { TransactionHistory } from "./transaction-history"
@@ -34,7 +33,7 @@ import { AccountsManager } from "./accounts-manager"
 import { TokenList } from "./token-list"
 
 export function WalletDashboard() {
-  const { activeAccount: account, balance, chainId, refreshBalance, disconnectWallet, refreshTokenBalances } = useWallet()
+  const { activeAccount: account, balance, balanceLoading, chainId, refreshBalance, disconnectWallet, refreshTokenBalances } = useWallet()
   const [copied, setCopied] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [showSendTx, setShowSendTx] = useState(false)
@@ -77,16 +76,18 @@ export function WalletDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-background relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -mr-48 -mt-48 opacity-50" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -ml-48 -mb-48 opacity-50" />
       <div className="relative">
         <WalletHeader />
 
         <main className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
-          <Card className="brutalist-border bg-card overflow-hidden">
-            <CardHeader className="pb-3 relative border-b-2 border-black">
+          <Card className="brutalist-border bg-card overflow-hidden shadow-2xl">
+            <CardHeader className="pb-3 relative border-b-4 border-primary/20 bg-gradient-to-r from-card via-primary/5 to-card">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 bg-primary flex items-center justify-center border-2 border-black shrink-0">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center border-2 border-black shrink-0 shadow-md">
                     <Wallet className="w-6 h-6 sm:w-7 sm:h-7 text-primary-foreground" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -95,12 +96,21 @@ export function WalletDashboard() {
                       <Badge variant="outline" className="text-[10px] sm:text-xs border-2 border-black font-black uppercase">
                         {chain?.name || "Unknown"}
                       </Badge>
-                      <Badge
-                        variant="outline"
-                        className="text-[10px] sm:text-xs border-2 border-black font-black uppercase bg-secondary"
-                      >
-                        Testnet
-                      </Badge>
+                      {chain?.testnet ? (
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] sm:text-xs border-2 border-black font-black uppercase bg-secondary"
+                        >
+                          Testnet
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] sm:text-xs border-2 border-green-600 font-black uppercase bg-gradient-to-r from-green-500 to-green-600 text-white shadow-sm"
+                        >
+                          Mainnet
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -109,27 +119,38 @@ export function WalletDashboard() {
                     variant="ghost"
                     size="icon"
                     onClick={handleRefresh}
-                    disabled={isRefreshing}
-                    className="h-9 w-9 border-2 border-black"
+                    disabled={isRefreshing || balanceLoading}
+                    className="h-9 w-9 border-2 border-black hover:bg-primary/10 transition-colors"
                   >
-                    <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+                    <RefreshCw className={`h-4 w-4 ${isRefreshing || balanceLoading ? "animate-spin" : ""}`} />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={disconnectWallet}
-                    className="h-9 w-9 border-2 border-black text-destructive hover:text-destructive"
+                    className="h-9 w-9 border-2 border-black text-destructive hover:bg-destructive/10 hover:text-destructive transition-colors"
                   >
                     <LogOut className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-6 relative pt-6">
+            <CardContent className="space-y-6 relative pt-6 pb-8">
               <div className="space-y-4">
                 <div className="text-7xl md:text-8xl font-extrabold tracking-tight leading-none">
-                  {balance}
-                  <span className="text-3xl md:text-4xl font-extrabold ml-3">{chain?.nativeCurrency.symbol}</span>
+                  {balanceLoading ? (
+                    <div className="flex items-center gap-4">
+                      <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                      <span className="text-3xl text-muted-foreground">Loading...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
+                        {balance}
+                      </span>
+                      <span className="text-3xl md:text-4xl font-extrabold ml-3 text-muted-foreground">{chain?.nativeCurrency.symbol}</span>
+                    </>
+                  )}
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   {account?.ensName && (
@@ -137,22 +158,22 @@ export function WalletDashboard() {
                       {account.ensName}
                     </code>
                   )}
-                  <code className="text-sm bg-accent px-3.5 py-2.5 font-mono border-2 border-black font-semibold">
+                  <code className="text-sm bg-gradient-to-r from-accent to-accent/80 px-3.5 py-2.5 font-mono border-2 border-black font-semibold shadow-sm">
                     {account?.address && WalletManager.formatAddress(account.address)}
                   </code>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={copyAddress}
-                    className="h-8 px-2 border-2 border-black font-black"
+                    className="h-8 px-2 border-2 border-black font-black hover:bg-primary/10 transition-colors"
                   >
                     {copied ? (
-                      <span className="text-xs font-black uppercase">Copied!</span>
+                      <span className="text-xs font-black uppercase text-green-600">Copied!</span>
                     ) : (
                       <Copy className="h-4 w-4" />
                     )}
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={openExplorer} className="h-8 px-2 border-2 border-black">
+                  <Button variant="ghost" size="sm" onClick={openExplorer} className="h-8 px-2 border-2 border-black hover:bg-primary/10 transition-colors">
                     <ExternalLink className="h-4 w-4" />
                   </Button>
                 </div>
@@ -160,7 +181,7 @@ export function WalletDashboard() {
 
               <div className="grid grid-cols-2 gap-4 pt-3">
                 <Button
-                  className="h-14 font-extrabold uppercase text-base border-2 border-black brutalist-shadow"
+                  className="h-14 font-extrabold uppercase text-base border-2 border-black brutalist-shadow bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary hover:scale-105 transition-all duration-300 hover:shadow-xl"
                   size="lg"
                   onClick={() => setShowSendTx(true)}
                 >
@@ -169,7 +190,7 @@ export function WalletDashboard() {
                 </Button>
                 <Button
                   variant="outline"
-                  className="h-14 font-extrabold uppercase text-base border-2 border-black bg-transparent hover:bg-muted brutalist-shadow"
+                  className="h-14 font-extrabold uppercase text-base border-2 border-black bg-transparent hover:bg-gradient-to-r hover:from-muted hover:to-muted/80 hover:scale-105 brutalist-shadow transition-all duration-300 hover:shadow-xl"
                   size="lg"
                   onClick={() => setShowHistory(true)}
                 >
@@ -180,117 +201,90 @@ export function WalletDashboard() {
             </CardContent>
           </Card>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
-            <TabsList className="w-full h-14 p-1 bg-muted border-2 border-black overflow-x-auto flex sm:grid sm:grid-cols-6">
-              <TabsTrigger value="actions" className="font-extrabold text-xs sm:text-sm uppercase data-[state=active]:bg-card shrink-0 px-3 sm:px-4 h-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className="w-full h-14 p-1 bg-gradient-to-r from-muted via-muted/90 to-muted/80 border-2 border-black overflow-x-auto flex sm:grid sm:grid-cols-5 shadow-lg">
+              <TabsTrigger value="actions" className="font-extrabold text-xs sm:text-sm uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-card data-[state=active]:to-primary/5 data-[state=active]:shadow-md shrink-0 px-3 sm:px-4 h-full transition-all">
                 <Sparkles className="w-4 h-4 mr-1 sm:mr-2 hidden sm:block" />
                 Actions
               </TabsTrigger>
-              <TabsTrigger value="tokens" className="font-extrabold text-xs sm:text-sm uppercase data-[state=active]:bg-card shrink-0 px-3 sm:px-4 h-full">
+              <TabsTrigger value="walletconnect" className="font-extrabold text-xs sm:text-base uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-xl data-[state=active]:scale-105 bg-gradient-to-r from-primary/10 to-primary/20 border-2 border-primary/30 shrink-0 px-4 sm:px-6 h-full transition-all hover:scale-105 hover:shadow-lg hover:border-primary/50 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer" />
+                <Link2 className="w-5 h-5 mr-2 relative z-10" />
+                <span className="relative z-10 font-black">WalletConnect</span>
+              </TabsTrigger>
+              <TabsTrigger value="tokens" className="font-extrabold text-xs sm:text-sm uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-card data-[state=active]:to-primary/5 data-[state=active]:shadow-md shrink-0 px-3 sm:px-4 h-full transition-all">
                 <Wallet className="w-4 h-4 mr-1 sm:mr-2 hidden sm:block" />
                 Tokens
               </TabsTrigger>
-              <TabsTrigger value="walletconnect" className="font-extrabold text-xs sm:text-sm uppercase data-[state=active]:bg-card shrink-0 px-3 sm:px-4 h-full">
-                <Link2 className="w-4 h-4 mr-1 sm:mr-2 hidden sm:block" />
-                Connect
-              </TabsTrigger>
-              <TabsTrigger value="networks" className="font-extrabold text-xs sm:text-sm uppercase data-[state=active]:bg-card shrink-0 px-3 sm:px-4 h-full">
+              <TabsTrigger value="networks" className="font-extrabold text-xs sm:text-sm uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-card data-[state=active]:to-primary/5 data-[state=active]:shadow-md shrink-0 px-3 sm:px-4 h-full transition-all">
                 <Network className="w-4 h-4 mr-1 sm:mr-2 hidden sm:block" />
                 Networks
               </TabsTrigger>
-              <TabsTrigger value="accounts" className="font-black text-xs sm:text-sm uppercase data-[state=active]:bg-card shrink-0 px-3 sm:px-4">
+              <TabsTrigger value="accounts" className="font-extrabold text-xs sm:text-sm uppercase data-[state=active]:bg-gradient-to-r data-[state=active]:from-card data-[state=active]:to-primary/5 data-[state=active]:shadow-md shrink-0 px-3 sm:px-4 h-full transition-all">
                 <Users className="w-4 h-4 mr-1 sm:mr-2 hidden sm:block" />
                 Accounts
               </TabsTrigger>
-              <TabsTrigger value="account" className="font-black text-xs sm:text-sm uppercase data-[state=active]:bg-card shrink-0 px-3 sm:px-4">
-                <Key className="w-4 h-4 mr-1 sm:mr-2 hidden sm:block" />
-                Account
-              </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="actions" className="space-y-5">
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <TabsContent value="actions" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card
-                  className="brutalist-border hover:border-primary transition-all cursor-pointer group bg-card"
+                  className="brutalist-border hover:border-primary hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 cursor-pointer group bg-gradient-to-br from-card to-primary/5 overflow-hidden relative"
                   onClick={() => setShowSendTx(true)}
                 >
-                  <CardHeader className="pb-3 border-b-2 border-black">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform" />
+                  <CardHeader className="pb-3 border-b-2 border-black relative">
                     <CardTitle className="flex items-center gap-3 text-lg font-extrabold uppercase">
-                      <div className="w-11 h-11 bg-primary flex items-center justify-center border-2 border-black">
+                      <div className="w-11 h-11 bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center border-2 border-black shadow-md group-hover:scale-110 transition-transform">
                         <Send className="h-5 w-5 text-primary-foreground" />
                       </div>
                       Send TX
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="pt-4">
-                    <p className="text-sm font-mono font-medium leading-relaxed">Test sending tokens to any address</p>
+                  <CardContent className="pt-4 relative">
+                    <p className="text-sm font-mono font-semibold leading-relaxed text-muted-foreground">Test sending tokens to any address with custom parameters</p>
                   </CardContent>
                 </Card>
 
                 <Card
-                  className="brutalist-border hover:border-primary transition-all cursor-pointer group bg-card"
+                  className="brutalist-border hover:border-primary hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 cursor-pointer group bg-gradient-to-br from-card to-secondary/10 overflow-hidden relative"
                   onClick={() => {
                     const tab = document.querySelector('[data-state="inactive"][value="networks"]') as HTMLElement
                     tab?.click()
                   }}
                 >
-                  <CardHeader className="pb-3 border-b-2 border-black">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/10 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform" />
+                  <CardHeader className="pb-3 border-b-2 border-black relative">
                     <CardTitle className="flex items-center gap-3 text-lg font-extrabold uppercase">
-                      <div className="w-11 h-11 bg-primary flex items-center justify-center border-2 border-black">
-                        <Network className="h-5 w-5 text-primary-foreground" />
+                      <div className="w-11 h-11 bg-gradient-to-br from-secondary to-secondary/80 flex items-center justify-center border-2 border-black shadow-md group-hover:scale-110 transition-transform">
+                        <Network className="h-5 w-5 text-secondary-foreground" />
                       </div>
                       Networks
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="pt-4">
-                    <p className="text-sm font-mono font-medium leading-relaxed">Test across multiple testnets</p>
+                  <CardContent className="pt-4 relative">
+                    <p className="text-sm font-mono font-semibold leading-relaxed text-muted-foreground">Switch and manage multiple blockchain networks</p>
                   </CardContent>
                 </Card>
 
                 <Card
-                  className="brutalist-border hover:border-primary transition-all cursor-pointer group bg-card"
+                  className="brutalist-border hover:border-primary hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 cursor-pointer group bg-gradient-to-br from-card to-accent/20 overflow-hidden relative"
                   onClick={() => setShowHistory(true)}
                 >
-                  <CardHeader className="pb-3 border-b-2 border-black">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform" />
+                  <CardHeader className="pb-3 border-b-2 border-black relative">
                     <CardTitle className="flex items-center gap-3 text-lg font-extrabold uppercase">
-                      <div className="w-11 h-11 bg-black flex items-center justify-center border-2 border-black">
-                        <History className="h-5 w-5 text-white" />
+                      <div className="w-11 h-11 bg-gradient-to-br from-foreground to-foreground/80 flex items-center justify-center border-2 border-black shadow-md group-hover:scale-110 transition-transform">
+                        <History className="h-5 w-5 text-background" />
                       </div>
                       History
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="pt-4">
-                    <p className="text-sm font-mono font-medium leading-relaxed">View all test transactions</p>
+                  <CardContent className="pt-4 relative">
+                    <p className="text-sm font-mono font-semibold leading-relaxed text-muted-foreground">View and track all transaction history</p>
                   </CardContent>
                 </Card>
               </div>
-
-              <Card className="brutalist-border bg-accent">
-                <CardHeader className="pb-4 border-b-2 border-black">
-                  <CardTitle className="text-base flex items-center gap-2 font-extrabold uppercase">
-                    <Key className="h-5 w-5" />
-                    Network Details
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-4">
-                  <div className="grid grid-cols-3 gap-5 font-mono">
-                    <div className="space-y-1.5">
-                      <p className="text-xs uppercase font-semibold text-muted-foreground">Network</p>
-                      <p className="text-base font-extrabold">{chain?.name}</p>
-                    </div>
-                    <div className="space-y-1.5">
-                      <p className="text-xs uppercase font-semibold text-muted-foreground">Chain ID</p>
-                      <p className="text-base font-extrabold">{chainId}</p>
-                    </div>
-                    <div className="space-y-1.5">
-                      <p className="text-xs uppercase font-semibold text-muted-foreground">Type</p>
-                      <Badge variant="outline" className="text-xs border-2 border-black font-extrabold bg-secondary">
-                        Testnet
-                      </Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
             </TabsContent>
 
             <TabsContent value="tokens" className="space-y-4">
@@ -309,10 +303,6 @@ export function WalletDashboard() {
 
             <TabsContent value="accounts" className="space-y-4">
               <AccountsManager />
-            </TabsContent>
-
-            <TabsContent value="account" className="space-y-4">
-              <AccountDetails />
             </TabsContent>
           </Tabs>
         </main>

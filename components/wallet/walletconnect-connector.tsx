@@ -184,7 +184,7 @@ export function WalletConnectConnector() {
       id: `${request.id}`,
       timestamp: new Date(),
       method: request.method,
-      status: "pending",
+      status: "pending" as const,
       params: request.params,
     }, ...prev].slice(0, 50)) // Keep last 50 requests
     
@@ -192,8 +192,8 @@ export function WalletConnectConnector() {
     if (agentModeRef.current && currentAccount && !currentAccount.isWatchOnly && currentAccount.privateKey) {
       console.log("[v0] Agent mode enabled, auto-processing request...")
       try {
-        const currentChain = SUPPORTED_CHAINS.find((c) => c.id === currentChainId)
-        const rpcUrl = currentChain?.rpcUrl || "https://1rpc.io/sepolia"
+        const currentChain = SUPPORTED_CHAINS.find((c) => c.chainId === currentChainId)
+        const rpcUrl = currentChain?.rpcUrls.default.http[0] || "https://1rpc.io/sepolia"
         let result: string
 
         switch (request.method) {
@@ -319,8 +319,8 @@ export function WalletConnectConnector() {
 
     setIsProcessing(true)
     try {
-      const currentChain = SUPPORTED_CHAINS.find((c) => c.id === chainId)
-      const rpcUrl = currentChain?.rpcUrl || "https://1rpc.io/sepolia"
+      const currentChain = SUPPORTED_CHAINS.find((c) => c.chainId === chainId)
+      const rpcUrl = currentChain?.rpcUrls.default.http[0] || "https://1rpc.io/sepolia"
       let result: string
 
       switch (pendingRequest.method) {
@@ -422,20 +422,30 @@ export function WalletConnectConnector() {
 
   return (
     <>
-      <Card className="brutalist-border bg-card">
-        <CardHeader className="pb-3 border-b-[3px] border-foreground">
-          <CardTitle className="flex items-center justify-between text-xl font-black uppercase">
-            <div className="flex items-center gap-2">
-              <Link2 className="h-5 w-5" />
-              WALLETCONNECT
+      <Card className="brutalist-border bg-gradient-to-br from-primary/5 via-card to-primary/10 shadow-2xl border-primary/30 border-[3px] relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent" />
+        <CardHeader className="pb-4 border-b-[3px] border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 relative">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
+          <CardTitle className="flex items-center justify-between text-2xl font-black uppercase relative z-10">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-primary via-primary/90 to-primary/80 flex items-center justify-center border-2 border-black shadow-lg animate-pulse">
+                <Link2 className="h-6 w-6 text-primary-foreground" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  WALLETCONNECT
+                  <Badge className="bg-primary text-primary-foreground border-none font-bold text-xs">LIVE</Badge>
+                </div>
+                <p className="text-xs font-mono font-semibold text-muted-foreground normal-case mt-0.5">Real-time dApp Connection</p>
+              </div>
             </div>
             {initStatus === "ready" && (
-              <Badge variant="outline" className="border-[2px] border-success text-success font-mono text-xs">
+              <Badge variant="outline" className="border-2 border-success text-success font-mono text-xs font-bold">
                 READY
               </Badge>
             )}
             {initStatus === "initializing" && (
-              <Badge variant="outline" className="border-[2px] border-warning text-warning font-mono text-xs">
+              <Badge variant="outline" className="border-2 border-warning text-warning font-mono text-xs font-bold">
                 INIT
               </Badge>
             )}
@@ -460,7 +470,7 @@ export function WalletConnectConnector() {
                 <Button
                   onClick={() => setShowProjectIdDialog(true)}
                   size="sm"
-                  className="w-full border-[2px] border-foreground font-black uppercase"
+                  className="w-full border-2 border-foreground font-black uppercase"
                 >
                   <Settings className="w-3 h-3 mr-2" />
                   Add Project ID
@@ -505,14 +515,14 @@ export function WalletConnectConnector() {
               {sessionCount > 0 && (
                 <div className="space-y-3 pt-4 border-t-[3px] border-foreground">
                   <Label className="font-mono uppercase text-xs font-black">ACTIVE SESSIONS</Label>
-                  <ScrollArea className="h-[200px]">
+                  <ScrollArea className="h-50">
                     <div className="space-y-3">
                       {Object.values(sessions).map((session) => (
                         <div
                           key={session.topic}
                           className="flex items-start gap-3 p-4 border-[3px] border-foreground shadow-brutal-sm bg-background"
                         >
-                          <div className="w-10 h-10 border-[2px] border-foreground flex items-center justify-center bg-[#00ff00]">
+                          <div className="w-10 h-10 border-2 border-foreground flex items-center justify-center bg-green-500">
                             {session.peerMetadata.icons?.[0] ? (
                               <img
                                 src={session.peerMetadata.icons[0] || "/placeholder.svg"}
@@ -571,7 +581,7 @@ export function WalletConnectConnector() {
               {requestLogs.length > 0 && (
                 <div className="space-y-3 pt-4 border-t-[3px] border-foreground mt-6">
                   <Label className="font-mono uppercase text-xs font-black">REQUEST HISTORY (TEMPORARY)</Label>
-                  <ScrollArea className="h-[300px]">
+                  <ScrollArea className="h-75">
                     <div className="space-y-2">
                       {requestLogs.map((log) => (
                         <div
@@ -599,7 +609,7 @@ export function WalletConnectConnector() {
                           </div>
                           <details className="cursor-pointer">
                             <summary className="text-muted-foreground hover:text-foreground">View details...</summary>
-                            <pre className="mt-2 p-2 bg-muted overflow-auto max-h-[150px] text-[10px]">
+                            <pre className="mt-2 p-2 bg-muted overflow-auto max-h-37.5 text-[10px]">
                               {JSON.stringify(log.params, null, 2)}
                             </pre>
                           </details>
@@ -636,7 +646,7 @@ export function WalletConnectConnector() {
           {pendingProposal && (
             <div className="space-y-4">
               <div className="flex items-center gap-3 p-4 border-[3px] border-foreground bg-muted">
-                <div className="w-12 h-12 border-[2px] border-foreground flex items-center justify-center bg-background">
+                <div className="w-12 h-12 border-2 border-foreground flex items-center justify-center bg-background">
                   {pendingProposal.params.proposer.metadata.icons?.[0] ? (
                     <img
                       src={pendingProposal.params.proposer.metadata.icons[0] || "/placeholder.svg"}
@@ -724,7 +734,7 @@ export function WalletConnectConnector() {
                 </Alert>
               )}
 
-              <div className="p-4 border-[3px] border-foreground bg-muted font-mono text-xs overflow-auto max-h-[200px]">
+              <div className="p-4 border-3 border-foreground bg-muted font-mono text-xs overflow-auto max-h-50">
                 <pre className="whitespace-pre-wrap break-all">{formatRequestParams(pendingRequest)}</pre>
               </div>
 
