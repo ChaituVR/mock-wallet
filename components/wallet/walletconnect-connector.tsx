@@ -35,6 +35,14 @@ export function WalletConnectConnector() {
   const [showProjectIdDialog, setShowProjectIdDialog] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [initStatus, setInitStatus] = useState<"idle" | "initializing" | "ready" | "error">("idle")
+  const [requestLogs, setRequestLogs] = useState<Array<{
+    id: string
+    timestamp: Date
+    method: string
+    status: "approved" | "rejected" | "pending"
+    params: any
+    result?: any
+  }>>([])
   const initRef = useRef(false)
   const agentModeRef = useRef(agentMode)
   const activeAccountRef = useRef(activeAccount)
@@ -171,6 +179,15 @@ export function WalletConnectConnector() {
     const currentAccount = activeAccountRef.current
     const currentChainId = chainIdRef.current
     
+    // Add to request log
+    setRequestLogs(prev => [{
+      id: `${request.id}`,
+      timestamp: new Date(),
+      method: request.method,
+      status: "pending",
+      params: request.params,
+    }, ...prev].slice(0, 50)) // Keep last 50 requests
+    
     // Auto-approve in agent mode
     if (agentModeRef.current && currentAccount && !currentAccount.isWatchOnly && currentAccount.privateKey) {
       console.log("[v0] Agent mode enabled, auto-processing request...")
@@ -215,6 +232,11 @@ export function WalletConnectConnector() {
 
         await wcManager.respondToRequest(request.id, { result })
         console.log("[v0] Request auto-processed in agent mode")
+        
+        // Update log status
+        setRequestLogs(prev => prev.map(log => 
+          log.id === `${request.id}` ? { ...log, status: "approved" as const, result } : log
+        ))
         return
       } catch (err) {
         console.error("[v0] Auto-process error:", err)
@@ -334,6 +356,11 @@ export function WalletConnectConnector() {
       await wcManager.respondToRequest(pendingRequest.id, { result })
       setShowRequestDialog(false)
       setPendingRequest(null)
+      
+      // Update log status
+      setRequestLogs(prev => prev.map(log => 
+        log.id === `${pendingRequest.id}` ? { ...log, status: "approved" as const, result } : log
+      ))
     } catch (err) {
       console.error("[v0] Request approval error:", err)
       setError(err instanceof Error ? err.message : "Failed to process request")
@@ -352,6 +379,11 @@ export function WalletConnectConnector() {
       })
       setShowRequestDialog(false)
       setPendingRequest(null)
+      
+      // Update log status
+      setRequestLogs(prev => prev.map(log => 
+        log.id === `${pendingRequest.id}` ? { ...log, status: "rejected" as const } : log
+      ))
     } catch (err) {
       console.error("[v0] Request rejection error:", err)
     } finally {
@@ -533,6 +565,56 @@ export function WalletConnectConnector() {
                   <Scan className="h-12 w-12 mb-4" />
                   <p className="font-mono text-sm uppercase font-black">NO ACTIVE CONNECTIONS</p>
                   <p className="font-mono text-xs mt-1 text-muted-foreground">PASTE A WC URI TO CONNECT</p>
+                </div>
+              )}
+              
+              {requestLogs.length > 0 && (
+                <div className="space-y-3 pt-4 border-t-[3px] border-foreground mt-6">
+                  <Label className="font-mono uppercase text-xs font-black">REQUEST HISTORY (TEMPORARY)</Label>
+                  <ScrollArea className="h-[300px]">
+                    <div className="space-y-2">
+                      {requestLogs.map((log) => (
+                        <div
+                          key={log.id}
+                          className="p-3 border-2 border-foreground bg-background text-xs font-mono"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <Badge 
+                                className={`text-xs border-2 border-foreground ${
+                                  log.status === "approved" 
+                                    ? "bg-[#00ff00] text-black" 
+                                    : log.status === "rejected"
+                                    ? "bg-[#ff3333] text-white"
+                                    : "bg-[#ffff00] text-black"
+                                }`}
+                              >
+                                {log.status.toUpperCase()}
+                              </Badge>
+                              <span className="font-bold uppercase">{log.method}</span>
+                            </div>
+                            <span className="text-muted-foreground">
+                              {log.timestamp.toLocaleTimeString()}
+                            </span>
+                          </div>
+                          <details className="cursor-pointer">
+                            <summary className="text-muted-foreground hover:text-foreground">View details...</summary>
+                            <pre className="mt-2 p-2 bg-muted overflow-auto max-h-[150px] text-[10px]">
+                              {JSON.stringify(log.params, null, 2)}
+                            </pre>
+                          </details>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setRequestLogs([])}
+                    className="w-full border-2 border-foreground font-mono uppercase"
+                  >
+                    Clear History
+                  </Button>
                 </div>
               )}
             </>

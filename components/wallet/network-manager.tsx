@@ -3,14 +3,39 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useWallet } from "@/lib/wallet/wallet-provider"
-import { SUPPORTED_CHAINS } from "@/lib/wallet/chain-config"
-import { Network, CheckCircle2, ExternalLink, Loader2 } from "lucide-react"
-import { useState } from "react"
+import { SUPPORTED_CHAINS, type ChainConfig } from "@/lib/wallet/chain-config"
+import { Network, CheckCircle2, ExternalLink, Loader2, Plus } from "lucide-react"
+import { useState, useEffect } from "react"
 
 export function NetworkManager() {
   const { chainId, switchChain } = useWallet()
   const [switchingTo, setSwitchingTo] = useState<number | null>(null)
+  const [customNetworks, setCustomNetworks] = useState<ChainConfig[]>([])
+  const [showAddDialog, setShowAddDialog] = useState(false)
+  const [newNetwork, setNewNetwork] = useState({
+    chainId: "",
+    name: "",
+    symbol: "",
+    rpcUrl: "",
+    explorerUrl: "",
+    isTestnet: true,
+  })
+
+  // Load custom networks from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("customNetworks")
+    if (saved) {
+      try {
+        setCustomNetworks(JSON.parse(saved))
+      } catch (e) {
+        console.error("Failed to load custom networks:", e)
+      }
+    }
+  }, [])
 
   const handleSwitch = async (targetChainId: number) => {
     setSwitchingTo(targetChainId)
@@ -18,49 +43,188 @@ export function NetworkManager() {
     setTimeout(() => setSwitchingTo(null), 500)
   }
 
+  const handleAddNetwork = () => {
+    const chainId = Number.parseInt(newNetwork.chainId)
+    if (!chainId || !newNetwork.name || !newNetwork.symbol || !newNetwork.rpcUrl) {
+      return
+    }
+
+    const network: ChainConfig = {
+      chainId,
+      name: newNetwork.name,
+      network: newNetwork.name.toLowerCase().replace(/\s+/g, "-"),
+      nativeCurrency: {
+        name: newNetwork.symbol,
+        symbol: newNetwork.symbol,
+        decimals: 18,
+      },
+      rpcUrls: {
+        default: { http: [newNetwork.rpcUrl] },
+        public: { http: [newNetwork.rpcUrl] },
+      },
+      blockExplorers: {
+        default: { 
+          name: "Explorer", 
+          url: newNetwork.explorerUrl || `https://explorer.chain${chainId}.com` 
+        },
+      },
+      testnet: newNetwork.isTestnet,
+    }
+
+    const updated = [...customNetworks, network]
+    setCustomNetworks(updated)
+    localStorage.setItem("customNetworks", JSON.stringify(updated))
+    
+    // Also add to SUPPORTED_CHAINS dynamically
+    if (!SUPPORTED_CHAINS.find(c => c.chainId === chainId)) {
+      SUPPORTED_CHAINS.push(network)
+    }
+    
+    setShowAddDialog(false)
+    setNewNetwork({
+      chainId: "",
+      name: "",
+      symbol: "",
+      rpcUrl: "",
+      explorerUrl: "",
+      isTestnet: true,
+    })
+  }
+
+  const allChains = [...SUPPORTED_CHAINS]
+
   return (
     <Card className="border-border/50">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Network className="h-5 w-5" />
-          Network Management
-        </CardTitle>
-        <CardDescription>Switch between different testnets to test cross-chain compatibility</CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Network className="h-5 w-5" />
+              Network Management
+            </CardTitle>
+            <CardDescription>Switch between different networks or add custom ones</CardDescription>
+          </div>
+          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="font-extrabold uppercase border-2 border-black">
+                <Plus className="h-4 w-4 mr-1" />
+                Add Network
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md border-2 border-black">
+              <DialogHeader>
+                <DialogTitle className="font-extrabold uppercase">Add Custom Network</DialogTitle>
+                <DialogDescription className="font-mono font-medium">
+                  Add any EVM-compatible network
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="font-mono uppercase text-xs font-semibold">Chain ID</Label>
+                  <Input
+                    type="number"
+                    placeholder="e.g., 1"
+                    value={newNetwork.chainId}
+                    onChange={(e) => setNewNetwork({ ...newNetwork, chainId: e.target.value })}
+                    className="border-2 border-black font-mono"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-mono uppercase text-xs font-semibold">Network Name</Label>
+                  <Input
+                    placeholder="e.g., Ethereum"
+                    value={newNetwork.name}
+                    onChange={(e) => setNewNetwork({ ...newNetwork, name: e.target.value })}
+                    className="border-2 border-black"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-mono uppercase text-xs font-semibold">Currency Symbol</Label>
+                  <Input
+                    placeholder="e.g., ETH"
+                    value={newNetwork.symbol}
+                    onChange={(e) => setNewNetwork({ ...newNetwork, symbol: e.target.value })}
+                    className="border-2 border-black"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-mono uppercase text-xs font-semibold">RPC URL</Label>
+                  <Input
+                    placeholder="https://..."
+                    value={newNetwork.rpcUrl}
+                    onChange={(e) => setNewNetwork({ ...newNetwork, rpcUrl: e.target.value })}
+                    className="border-2 border-black font-mono text-sm"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-mono uppercase text-xs font-semibold">Block Explorer URL (Optional)</Label>
+                  <Input
+                    placeholder="https://..."
+                    value={newNetwork.explorerUrl}
+                    onChange={(e) => setNewNetwork({ ...newNetwork, explorerUrl: e.target.value })}
+                    className="border-2 border-black font-mono text-sm"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="testnet"
+                    checked={newNetwork.isTestnet}
+                    onChange={(e) => setNewNetwork({ ...newNetwork, isTestnet: e.target.checked })}
+                    className="w-4 h-4"
+                  />
+                  <Label htmlFor="testnet" className="font-mono text-sm cursor-pointer">
+                    This is a testnet
+                  </Label>
+                </div>
+                <Button
+                  onClick={handleAddNetwork}
+                  className="w-full h-12 font-extrabold uppercase border-2 border-black"
+                  disabled={!newNetwork.chainId || !newNetwork.name || !newNetwork.symbol || !newNetwork.rpcUrl}
+                >
+                  Add Network
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="grid gap-3">
-          {SUPPORTED_CHAINS.map((chain) => {
+          {allChains.map((chain) => {
             const isActive = chain.chainId === chainId
             const isSwitching = switchingTo === chain.chainId
+            const isCustom = customNetworks.some(c => c.chainId === chain.chainId)
 
             return (
               <div
                 key={chain.chainId}
-                className={`flex items-center justify-between p-4 rounded-lg border transition-all ${
-                  isActive ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"
+                className={`flex items-center justify-between p-4 border-2 border-black transition-all ${
+                  isActive ? "bg-primary/10" : "bg-card hover:bg-accent"
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      isActive ? "bg-primary/10" : "bg-muted"
+                    className={`w-11 h-11 flex items-center justify-center border-2 border-black ${
+                      isActive ? "bg-primary" : "bg-muted"
                     }`}
                   >
-                    <Network className={`h-5 w-5 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
+                    <Network className={`h-5 w-5 ${isActive ? "text-primary-foreground" : "text-muted-foreground"}`} />
                   </div>
                   <div>
-                    <div className="font-semibold flex items-center gap-2">
+                    <div className="font-extrabold flex items-center gap-2">
                       {chain.name}
                       {isActive && <CheckCircle2 className="h-4 w-4 text-primary" />}
+                      {isCustom && <Badge variant="outline" className="text-xs border-2 border-black">Custom</Badge>}
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-muted-foreground font-mono font-medium">
                       Chain ID: {chain.chainId} • {chain.nativeCurrency.symbol}
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="outline" className="text-xs border-2 border-black font-extrabold">
                     {chain.testnet ? "Testnet" : "Mainnet"}
                   </Badge>
                   {!isActive && (

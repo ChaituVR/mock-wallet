@@ -19,6 +19,24 @@ export interface ChainConfig {
 
 export const SUPPORTED_CHAINS: ChainConfig[] = [
   {
+    chainId: 1,
+    name: "Ethereum",
+    network: "mainnet",
+    nativeCurrency: {
+      name: "Ether",
+      symbol: "ETH",
+      decimals: 18,
+    },
+    rpcUrls: {
+      default: { http: ["https://eth.llamarpc.com"] },
+      public: { http: ["https://eth.llamarpc.com"] },
+    },
+    blockExplorers: {
+      default: { name: "Etherscan", url: "https://etherscan.io" },
+    },
+    testnet: false,
+  },
+  {
     chainId: 11155111,
     name: "Sepolia",
     network: "sepolia",
@@ -37,22 +55,22 @@ export const SUPPORTED_CHAINS: ChainConfig[] = [
     testnet: true,
   },
   {
-    chainId: 80002,
-    name: "Polygon Amoy",
-    network: "polygon-amoy",
+    chainId: 8453,
+    name: "Base",
+    network: "base",
     nativeCurrency: {
-      name: "MATIC",
-      symbol: "MATIC",
+      name: "Ether",
+      symbol: "ETH",
       decimals: 18,
     },
     rpcUrls: {
-      default: { http: ["https://rpc-amoy.polygon.technology"] },
-      public: { http: ["https://rpc-amoy.polygon.technology"] },
+      default: { http: ["https://mainnet.base.org"] },
+      public: { http: ["https://mainnet.base.org"] },
     },
     blockExplorers: {
-      default: { name: "PolygonScan", url: "https://amoy.polygonscan.com" },
+      default: { name: "BaseScan", url: "https://basescan.org" },
     },
-    testnet: true,
+    testnet: false,
   },
   {
     chainId: 84532,
@@ -69,6 +87,24 @@ export const SUPPORTED_CHAINS: ChainConfig[] = [
     },
     blockExplorers: {
       default: { name: "BaseScan", url: "https://sepolia.basescan.org" },
+    },
+    testnet: true,
+  },
+  {
+    chainId: 80002,
+    name: "Polygon Amoy",
+    network: "polygon-amoy",
+    nativeCurrency: {
+      name: "MATIC",
+      symbol: "MATIC",
+      decimals: 18,
+    },
+    rpcUrls: {
+      default: { http: ["https://rpc-amoy.polygon.technology"] },
+      public: { http: ["https://rpc-amoy.polygon.technology"] },
+    },
+    blockExplorers: {
+      default: { name: "PolygonScan", url: "https://amoy.polygonscan.com" },
     },
     testnet: true,
   },
