@@ -79,7 +79,7 @@ export function WalletDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-background relative overflow-hidden">
       <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -mr-48 -mt-48 opacity-50" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -ml-48 -mb-48 opacity-50" />
-      <div className="relative">
+      <div className="relative z-10">
         <WalletHeader />
 
         <main className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">

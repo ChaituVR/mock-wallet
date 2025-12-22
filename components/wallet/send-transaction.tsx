@@ -126,7 +126,7 @@ export function SendTransaction({ open, onOpenChange }: SendTransactionProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md border-[3px] border-foreground shadow-2xl bg-gradient-to-br from-background via-primary/5 to-background">
+      <DialogContent className="max-w-md border-[3px] border-foreground shadow-2xl bg-background">
         <DialogHeader className="border-b-2 border-foreground pb-4">
           <DialogTitle className="flex items-center gap-3 font-mono uppercase font-black text-lg">
             <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center border-2 border-black shadow-md">

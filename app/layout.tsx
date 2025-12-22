@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Inter, JetBrains_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { WalletProvider } from "@/lib/wallet/wallet-provider"
+import { AnimatedBackground } from "@/components/animated-background"
 import "./globals.css"
 
 const inter = Inter({
@@ -349,6 +350,7 @@ export default function RootLayout({
         {/* <meta name="yandex-verification" content="YOUR_CODE" /> */}
       </head>
       <body className={`${inter.variable} ${jetbrains.variable} font-sans antialiased`}>
+        <AnimatedBackground />
         <WalletProvider>{children}</WalletProvider>
         <Analytics />
       </body>

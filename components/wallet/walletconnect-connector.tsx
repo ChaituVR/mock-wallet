@@ -17,8 +17,24 @@ import {
   type WCRequest,
   parseWCUri,
 } from "@/lib/walletconnect/wc-manager"
-import { Link2, Unlink, AlertCircle, CheckCircle2, Loader2, ExternalLink, Scan, Settings, Eye, Bot } from "lucide-react"
+import { Link2, Unlink, AlertCircle, CheckCircle2, Loader2, ExternalLink, Scan, Settings, Eye, Bot, Camera, X } from "lucide-react"
 import { SUPPORTED_CHAINS } from "@/lib/wallet/chain-config"
+import dynamic from "next/dynamic"
+
+// Dynamically import QR scanner to avoid SSR issues
+const QrScanner = dynamic(() => import("react-qr-scanner"), { ssr: false })
+
+// Helper function to format time ago
+function formatTimeAgo(timestamp: number): string {
+  const seconds = Math.floor((Date.now() - timestamp) / 1000)
+  if (seconds < 60) return "just now"
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  return `${days}d ago`
+}
 
 export function WalletConnectConnector() {
   const { activeAccount, chainId, projectId, agentMode } = useWallet()
@@ -33,6 +49,7 @@ export function WalletConnectConnector() {
   const [showSessionDialog, setShowSessionDialog] = useState(false)
   const [showRequestDialog, setShowRequestDialog] = useState(false)
   const [showProjectIdDialog, setShowProjectIdDialog] = useState(false)
+  const [showQrScanner, setShowQrScanner] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [initStatus, setInitStatus] = useState<"idle" | "initializing" | "ready" | "error">("idle")
   const [requestLogs, setRequestLogs] = useState<Array<{
@@ -263,6 +280,7 @@ export function WalletConnectConnector() {
       console.log("[v0] Attempting to pair with URI...")
       await wcManager.pair(wcUri)
       setWcUri("")
+      setShowQrScanner(false)
       console.log("[v0] Pair called successfully, waiting for proposal...")
     } catch (err) {
       console.error("[v0] Connection error:", err)
@@ -270,6 +288,27 @@ export function WalletConnectConnector() {
     } finally {
       setIsConnecting(false)
     }
+  }
+
+  const handleQrScan = (data: any) => {
+    if (data?.text) {
+      const uri = data.text
+      if (uri.startsWith("wc:")) {
+        setWcUri(uri)
+        setShowQrScanner(false)
+        // Auto-connect after scanning
+        setTimeout(() => {
+          if (uri && activeAccount) {
+            setWcUri(uri)
+          }
+        }, 100)
+      }
+    }
+  }
+
+  const handleQrError = (err: any) => {
+    console.error("[v0] QR Scanner error:", err)
+    setError("Failed to access camera. Please check permissions.")
   }
 
   const handleApprove = async () => {
@@ -493,6 +532,14 @@ export function WalletConnectConnector() {
                     disabled={isConnecting || initStatus !== "ready"}
                   />
                   <Button
+                    onClick={() => setShowQrScanner(true)}
+                    disabled={isConnecting || initStatus !== "ready"}
+                    className="px-4 bg-primary text-primary-foreground border-[3px] border-foreground font-mono uppercase hover:bg-primary/90"
+                    title="Scan QR Code"
+                  >
+                    <Camera className="h-4 w-4" />
+                  </Button>
+                  <Button
                     onClick={handleConnect}
                     disabled={!wcUri.trim() || isConnecting || initStatus !== "ready"}
                     className="px-6 bg-foreground text-background border-[3px] border-foreground font-mono uppercase hover:bg-background hover:text-foreground"
@@ -534,10 +581,35 @@ export function WalletConnectConnector() {
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="font-mono font-black text-sm uppercase">{session.peerMetadata.name}</div>
+                            <div className="flex items-center gap-2">
+                              <div className="font-mono font-black text-sm uppercase">{session.peerMetadata.name}</div>
+                              {session.verifyContext && (
+                                <Badge 
+                                  className={`text-[10px] border-2 border-foreground px-1.5 py-0.5 ${
+                                    session.verifyContext.verified.isScam 
+                                      ? "bg-[#ff3333] text-white" 
+                                      : session.verifyContext.verified.validation === "VALID"
+                                      ? "bg-[#00ff00] text-black"
+                                      : "bg-[#ffaa00] text-black"
+                                  }`}
+                                >
+                                  {session.verifyContext.verified.isScam 
+                                    ? "🚫 SCAM" 
+                                    : session.verifyContext.verified.validation === "VALID"
+                                    ? "✓"
+                                    : "⚠️"}
+                                </Badge>
+                              )}
+                            </div>
                             <p className="font-mono text-xs truncate text-muted-foreground">
                               {session.peerMetadata.url}
                             </p>
+                            {(session.lastActivity || session.requestCount !== undefined) && (
+                              <p className="font-mono text-[10px] text-muted-foreground mt-1">
+                                {session.requestCount !== undefined && `${session.requestCount} requests`}
+                                {session.lastActivity && ` • Active ${formatTimeAgo(session.lastActivity)}`}
+                              </p>
+                            )}
                             <div className="flex items-center gap-2 mt-2">
                               <Badge className="text-xs border-2 border-foreground bg-[#00ff00] text-black font-mono">
                                 CONNECTED
@@ -658,7 +730,26 @@ export function WalletConnectConnector() {
                   )}
                 </div>
                 <div className="flex-1">
-                  <div className="font-mono font-black uppercase">{pendingProposal.params.proposer.metadata.name}</div>
+                  <div className="flex items-center gap-2">
+                    <div className="font-mono font-black uppercase">{pendingProposal.params.proposer.metadata.name}</div>
+                    {pendingProposal.verifyContext && (
+                      <Badge 
+                        className={`text-[10px] border-2 border-foreground px-1.5 py-0.5 ${
+                          pendingProposal.verifyContext.verified.isScam 
+                            ? "bg-[#ff3333] text-white" 
+                            : pendingProposal.verifyContext.verified.validation === "VALID"
+                            ? "bg-[#00ff00] text-black"
+                            : "bg-[#ffaa00] text-black"
+                        }`}
+                      >
+                        {pendingProposal.verifyContext.verified.isScam 
+                          ? "🚫 SCAM WARNING" 
+                          : pendingProposal.verifyContext.verified.validation === "VALID"
+                          ? "✓ VERIFIED"
+                          : "⚠️ UNVERIFIED"}
+                      </Badge>
+                    )}
+                  </div>
                   <p className="font-mono text-xs truncate text-muted-foreground">
                     {pendingProposal.params.proposer.metadata.url}
                   </p>
@@ -682,6 +773,24 @@ export function WalletConnectConnector() {
                   </li>
                 </ul>
               </div>
+
+              {pendingProposal.verifyContext?.verified.isScam && (
+                <Alert className="border-[3px] border-foreground bg-[#ff3333]/30">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="font-mono text-xs font-black">
+                    ⚠️ WARNING: THIS SITE MAY BE A SCAM! WE STRONGLY RECOMMEND REJECTING THIS CONNECTION.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {pendingProposal.verifyContext?.verified.validation === "UNKNOWN" && (
+                <Alert className="border-[3px] border-foreground bg-[#ffaa00]/30">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="font-mono text-xs">
+                    ⚠️ THIS APP IS NOT VERIFIED. MAKE SURE YOU TRUST IT BEFORE CONNECTING.
+                  </AlertDescription>
+                </Alert>
+              )}
 
               <Alert className="border-[3px] border-foreground bg-[#ffff00]/30">
                 <AlertCircle className="h-4 w-4" />
@@ -734,9 +843,51 @@ export function WalletConnectConnector() {
                 </Alert>
               )}
 
+              {/* Human-readable description */}
+              {pendingRequest.humanReadable && (
+                <div className="p-4 border-[3px] border-foreground bg-gradient-to-br from-[#00ff00]/20 to-[#00ffff]/20">
+                  <div className="font-mono text-sm font-black">{pendingRequest.humanReadable}</div>
+                </div>
+              )}
+
+              {/* Verification badge for the requesting dApp */}
+              {pendingRequest.verifyContext && (
+                <div className="flex items-center gap-2">
+                  <Badge 
+                    className={`text-xs border-2 border-foreground ${
+                      pendingRequest.verifyContext.verified.isScam 
+                        ? "bg-[#ff3333] text-white" 
+                        : pendingRequest.verifyContext.verified.validation === "VALID"
+                        ? "bg-[#00ff00] text-black"
+                        : "bg-[#ffaa00] text-black"
+                    }`}
+                  >
+                    {pendingRequest.verifyContext.verified.isScam 
+                      ? "🚫 SCAM WARNING" 
+                      : pendingRequest.verifyContext.verified.validation === "VALID"
+                      ? "✓ VERIFIED APP"
+                      : "⚠️ UNVERIFIED APP"}
+                  </Badge>
+                  {pendingRequest.verifyContext.verified.origin && (
+                    <span className="font-mono text-xs text-muted-foreground">
+                      from {pendingRequest.verifyContext.verified.origin}
+                    </span>
+                  )}
+                </div>
+              )}
+
               <div className="p-4 border-3 border-foreground bg-muted font-mono text-xs overflow-auto max-h-50">
                 <pre className="whitespace-pre-wrap break-all">{formatRequestParams(pendingRequest)}</pre>
               </div>
+
+              {pendingRequest.verifyContext?.verified.isScam && (
+                <Alert className="border-[3px] border-foreground bg-[#ff3333]/30">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="font-mono text-xs font-black">
+                    ⚠️ DANGER: REQUEST FROM SUSPECTED SCAM SITE! WE STRONGLY RECOMMEND REJECTING.
+                  </AlertDescription>
+                </Alert>
+              )}
 
               <Alert className="border-[3px] border-foreground bg-[#ffff00]/30">
                 <AlertCircle className="h-4 w-4" />
@@ -792,6 +943,53 @@ export function WalletConnectConnector() {
               </AlertDescription>
             </Alert>
             <ProjectIdInput onClose={() => setShowProjectIdDialog(false)} />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* QR Scanner Dialog */}
+      <Dialog open={showQrScanner} onOpenChange={setShowQrScanner}>
+        <DialogContent className="max-w-md border-[3px] border-foreground shadow-brutal bg-background">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 font-mono uppercase font-black">
+              <Camera className="h-5 w-5" />
+              SCAN QR CODE
+            </DialogTitle>
+            <DialogDescription className="font-mono text-xs">
+              Point your camera at a WalletConnect QR code
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="relative aspect-square border-[3px] border-foreground overflow-hidden bg-black">
+              {showQrScanner && (
+                <QrScanner
+                  delay={300}
+                  onError={handleQrError}
+                  onScan={handleQrScan}
+                  style={{ width: "100%" }}
+                  constraints={{
+                    video: { facingMode: "environment" }
+                  }}
+                />
+              )}
+            </div>
+
+            <Alert className="border-[3px] border-foreground bg-primary/10">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="font-mono text-xs">
+                📷 Make sure to allow camera access when prompted
+              </AlertDescription>
+            </Alert>
+
+            <Button
+              variant="outline"
+              onClick={() => setShowQrScanner(false)}
+              className="w-full border-[3px] border-foreground font-mono uppercase hover:bg-muted"
+            >
+              <X className="h-4 w-4 mr-2" />
+              CANCEL
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

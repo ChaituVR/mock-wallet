@@ -5,6 +5,14 @@ import { WalletKit, type WalletKitTypes } from "@reown/walletkit"
 import { buildApprovedNamespaces, getSdkError } from "@walletconnect/utils"
 import { ethers } from "ethers"
 
+export type VerifyContext = {
+  verified: {
+    isScam?: boolean
+    origin?: string
+    validation: 'VALID' | 'INVALID' | 'UNKNOWN'
+  }
+}
+
 export interface WCSession {
   topic: string
   peerMetadata: {
@@ -15,11 +23,15 @@ export interface WCSession {
   }
   namespaces: any
   connectedAt: number
+  verifyContext?: VerifyContext
+  lastActivity?: number
+  requestCount?: number
 }
 
 export interface WCProposal {
   id: number
   params: WalletKitTypes.SessionProposal["params"]
+  verifyContext?: VerifyContext
 }
 
 export interface WCRequest {
@@ -28,6 +40,9 @@ export interface WCRequest {
   method: string
   params: any
   chainId: string
+  verifyContext?: VerifyContext
+  humanReadable?: string
+  decodedData?: any
 }
 
 // Parse WalletConnect URI to extract connection info
@@ -138,9 +153,14 @@ export class WalletConnectManager {
     // Session proposal event
     this.walletKit.on("session_proposal", (proposal: WalletKitTypes.SessionProposal) => {
       console.log("[v0] Session proposal received:", proposal)
+      
+      // Extract verification context if available
+      const verifyContext = (proposal as any).verifyContext as VerifyContext | undefined
+      
       const wcProposal: WCProposal = {
         id: proposal.id,
         params: proposal.params,
+        verifyContext
       }
       this.emit("session_proposal", wcProposal)
     })
@@ -148,14 +168,27 @@ export class WalletConnectManager {
     // Session request event (for signing, transactions, etc.)
     this.walletKit.on("session_request", (request: WalletKitTypes.SessionRequest) => {
       console.log("[v0] Session request received:", request)
+      
+      // Extract verification context if available
+      const verifyContext = (request as any).verifyContext as VerifyContext | undefined
+      
+      // Generate human-readable description
+      const humanReadable = this.getHumanReadableDescription(request.params.request.method, request.params.request.params)
+      
       const wcRequest: WCRequest = {
         id: request.id,
         topic: request.topic,
         method: request.params.request.method,
         params: request.params.request.params,
         chainId: request.params.chainId,
+        verifyContext,
+        humanReadable,
       }
       this.pendingRequests.set(request.id, wcRequest)
+      
+      // Update session activity
+      this.updateSessionActivity(request.topic)
+      
       this.emit("session_request", wcRequest)
     })
 
@@ -457,6 +490,58 @@ export class WalletConnectManager {
     return Array.from(this.pendingRequests.values())
   }
 
+  private getHumanReadableDescription(method: string, params: any): string {
+    switch (method) {
+      case 'personal_sign':
+        return `🖊️ Sign a message to prove it's really you`
+      case 'eth_sign':
+        return `✍️ Sign some data (be careful with this!)`
+      case 'eth_signTypedData':
+      case 'eth_signTypedData_v3':
+      case 'eth_signTypedData_v4':
+        return `📝 Sign structured data (like a form)`
+      case 'eth_sendTransaction':
+        return `💸 Send a transaction (spending money!)`
+      case 'eth_signTransaction':
+        return `📋 Sign a transaction (not sending yet)`
+      case 'wallet_switchEthereumChain':
+        return `🔄 Switch to a different blockchain network`
+      case 'wallet_addEthereumChain':
+        return `➕ Add a new blockchain network`
+      case 'wallet_watchAsset':
+        return `👀 Add a token to your wallet`
+      default:
+        return `🔧 ${method.replace('_', ' ').replace('eth', 'Ethereum')}`
+    }
+  }
+
+  private updateSessionActivity(topic: string): void {
+    if (!this.walletKit) return
+    const sessions = this.walletKit.getActiveSessions()
+    if (sessions[topic]) {
+      // Store activity tracking in memory (would be better in storage for persistence)
+      const session = sessions[topic] as any
+      session.lastActivity = Date.now()
+      session.requestCount = (session.requestCount || 0) + 1
+    }
+  }
+
+  getSessionDetails(topic: string): WCSession | null {
+    if (!this.walletKit) return null
+    const sessions = this.walletKit.getActiveSessions()
+    const session = sessions[topic]
+    if (!session) return null
+
+    return {
+      topic: session.topic,
+      peerMetadata: session.peer.metadata,
+      namespaces: session.namespaces,
+      connectedAt: (session as any).connectedAt || Date.now(),
+      lastActivity: (session as any).lastActivity,
+      requestCount: (session as any).requestCount || 0,
+    }
+  }
+
   on(event: string, callback: EventCallback): void {
     if (!this.listeners.has(event)) {
       this.listeners.set(event, new Set())
@@ -478,5 +563,53 @@ export class WalletConnectManager {
 
   getProjectId(): string {
     return this.projectId
+  }
+
+  // Emit accountsChanged event to all connected sessions
+  async emitAccountsChanged(accounts: string[]): Promise<void> {
+    const sessions = this.getActiveSessions()
+    
+    for (const [topic, session] of Object.entries(sessions)) {
+      try {
+        const chainId = `eip155:${session.requiredNamespaces?.eip155?.chains?.[0]?.split(':')[1] || '1'}`
+        
+        await this.web3wallet.emitSessionEvent({
+          topic,
+          event: {
+            name: 'accountsChanged',
+            data: accounts
+          },
+          chainId
+        })
+        
+        console.log(`[WalletConnect] Emitted accountsChanged to ${session.peerMetadata.name}`)
+      } catch (error) {
+        console.error(`[WalletConnect] Failed to emit accountsChanged to ${topic}:`, error)
+      }
+    }
+  }
+
+  // Emit chainChanged event to all connected sessions
+  async emitChainChanged(chainId: number): Promise<void> {
+    const sessions = this.getActiveSessions()
+    
+    for (const [topic, session] of Object.entries(sessions)) {
+      try {
+        const chainIdStr = `eip155:${chainId}`
+        
+        await this.web3wallet.emitSessionEvent({
+          topic,
+          event: {
+            name: 'chainChanged',
+            data: chainId
+          },
+          chainId: chainIdStr
+        })
+        
+        console.log(`[WalletConnect] Emitted chainChanged (${chainId}) to ${session.peerMetadata.name}`)
+      } catch (error) {
+        console.error(`[WalletConnect] Failed to emit chainChanged to ${topic}:`, error)
+      }
+    }
   }
 }

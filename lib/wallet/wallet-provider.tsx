@@ -6,6 +6,7 @@ import { WalletManager, type WalletAccount } from "./wallet-manager"
 import { getChainRpcUrl, getChainById } from "./chain-config"
 import { useSearchParams } from "next/navigation"
 import { type Token, ERC20_ABI, getTokensForChain } from "./token-config"
+import { WalletConnectManager } from "../walletconnect/wc-manager"
 
 interface TokenBalance extends Token {
   balance: string
@@ -326,6 +327,12 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
       WalletManager.setActiveAccountIndex(index)
       setActiveAccountIndex(index)
       
+      // Emit accountsChanged event to connected WalletConnect dApps
+      const wcManager = WalletConnectManager.getInstance()
+      if (wcManager) {
+        await wcManager.emitAccountsChanged([accounts[index].address])
+      }
+      
       // Refresh balance for new account
       setTimeout(() => {
         refreshBalance()
@@ -375,6 +382,13 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
     console.log(`[v0] Switching chain from ${chainId} to ${newChainId}`)
     setChainId(newChainId)
     localStorage.setItem("selected_chain_id", newChainId.toString())
+    
+    // Emit chainChanged event to connected WalletConnect dApps
+    const wcManager = WalletConnectManager.getInstance()
+    if (wcManager) {
+      await wcManager.emitChainChanged(newChainId)
+    }
+    
     await refreshBalance(newChainId)
     console.log(`[v0] Chain switch complete to ${newChainId}`)
   }
