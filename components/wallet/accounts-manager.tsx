@@ -149,11 +149,19 @@ export function AccountsManager() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <h3 className="font-black uppercase text-base truncate">
-                        {account.label || `Account ${index + 1}`}
+                        {account.ensName || account.label || `Account ${index + 1}`}
                       </h3>
-                      {account.isWatchOnly && (
+                      {account.ensName && (
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900 border border-blue-500 text-blue-700 dark:text-blue-300 font-mono"
+                        >
+                          ENS
+                        </Badge>
+                      )}
+                      {account.isWatchOnly && !account.ensName && (
                         <Badge
                           variant="outline"
                           className="text-[10px] px-1.5 py-0.5 bg-muted border border-foreground font-mono"

@@ -66,9 +66,20 @@ export function SendTransaction({ open, onOpenChange }: SendTransactionProps) {
         throw new Error("Provider not available")
       }
 
-      // Validate recipient address
-      if (!ethers.isAddress(recipient)) {
-        throw new Error("Invalid recipient address")
+      // Resolve ENS name if needed or validate recipient address
+      let resolvedRecipient = recipient.trim()
+      const ensPattern = /^[a-zA-Z0-9-]+\.(eth|xyz|luxe|kred|art|club)$/i
+      
+      if (ensPattern.test(resolvedRecipient)) {
+        // Resolve ENS name using mainnet
+        const mainnetProvider = new ethers.JsonRpcProvider("https://eth.llamarpc.com")
+        const resolvedAddress = await mainnetProvider.resolveName(resolvedRecipient)
+        if (!resolvedAddress) {
+          throw new Error(`Could not resolve ENS name: ${resolvedRecipient}`)
+        }
+        resolvedRecipient = resolvedAddress
+      } else if (!ethers.isAddress(resolvedRecipient)) {
+        throw new Error("Invalid recipient address or ENS name")
       }
 
       // Create wallet instance with provider
@@ -76,7 +87,7 @@ export function SendTransaction({ open, onOpenChange }: SendTransactionProps) {
 
       // Prepare transaction
       const tx = {
-        to: recipient,
+        to: resolvedRecipient,
         value: ethers.parseEther(amount),
         gasLimit: BigInt(gasLimit),
       }
@@ -178,11 +189,11 @@ export function SendTransaction({ open, onOpenChange }: SendTransactionProps) {
             <>
               <div className="space-y-2">
                 <Label htmlFor="recipient" className="font-mono uppercase text-xs font-black">
-                  RECIPIENT ADDRESS
+                  RECIPIENT ADDRESS OR ENS NAME
                 </Label>
                 <Input
                   id="recipient"
-                  placeholder="0x..."
+                  placeholder="0x... or vitalik.eth"
                   value={recipient}
                   onChange={(e) => setRecipient(e.target.value)}
                   className="font-mono text-sm border-[3px] border-foreground"

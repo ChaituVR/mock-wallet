@@ -26,10 +26,10 @@ export function WalletSetup() {
     }
   }, [])
 
-  const handleImport = () => {
+  const handleImport = async () => {
     try {
       setError("")
-      importWallet(importValue)
+      await importWallet(importValue)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to import wallet")
     }
@@ -45,14 +45,14 @@ export function WalletSetup() {
     <div className="min-h-screen flex flex-col bg-background">
       <div className="flex-1 flex flex-col relative overflow-hidden">
         <div className="relative flex-1 flex flex-col max-w-6xl mx-auto px-4 py-8 w-full">
-          <div className="flex items-center justify-between mb-8 brutalist-border bg-accent p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary flex items-center justify-center border-2 border-black">
-                <Hexagon className="w-5 h-5 text-primary-foreground" />
+          <div className="flex items-center justify-between mb-8 brutalist-border bg-accent p-3 sm:p-4 gap-2">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary flex items-center justify-center border-2 border-black shrink-0">
+                <Hexagon className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
               </div>
-              <span className="text-2xl font-black tracking-tighter uppercase">mockwallet.dev</span>
+              <span className="text-lg sm:text-2xl font-black tracking-tighter uppercase truncate">mockwallet.dev</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
               <ThemeToggle />
               <AccountSwitcher />
             </div>
@@ -70,14 +70,14 @@ export function WalletSetup() {
               <Sparkles className="w-3 h-3 mr-1" />
               Web3 Testing
             </Badge>
-            <h1 className="text-5xl md:text-7xl font-black tracking-tighter mb-4 text-balance uppercase leading-none">
+            <h1 className="text-3xl sm:text-5xl md:text-7xl font-black tracking-tighter mb-4 text-balance uppercase leading-none">
               The Developer
               <br />
               <span className="text-primary inline-block">Wallet</span> for
               <br />
               Web3 Testing
             </h1>
-            <p className="text-lg font-mono max-w-2xl mx-auto text-pretty font-bold">
+            <p className="text-sm sm:text-lg font-mono max-w-2xl mx-auto text-pretty font-bold px-2">
               Test transactions, connect to any dApp via WalletConnect, and debug your Web3 applications. Auto-import
               wallets via URL for seamless CI/CD integration.
             </p>
@@ -132,12 +132,12 @@ export function WalletSetup() {
                   <TabsContent value="import" className="space-y-4">
                     <div className="p-4 bg-secondary border-2 border-black">
                       <p className="text-sm font-mono font-bold">
-                        Import using private key, mnemonic phrase, or Ethereum address (watch-only).
+                        Import using private key, mnemonic phrase, ENS name, or Ethereum address (watch-only).
                       </p>
                     </div>
                     <div className="space-y-2">
                       <Input
-                        placeholder="Private key, mnemonic phrase, or 0x address..."
+                        placeholder="Private key, mnemonic, ENS name (e.g. vitalik.eth), or 0x address..."
                         value={importValue}
                         onChange={(e) => {
                           setImportValue(e.target.value)

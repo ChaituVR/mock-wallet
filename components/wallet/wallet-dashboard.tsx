@@ -132,6 +132,11 @@ export function WalletDashboard() {
                   <span className="text-2xl md:text-3xl font-black ml-2">{chain?.nativeCurrency.symbol}</span>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
+                  {account?.ensName && (
+                    <code className="text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-3 py-2 font-mono border-2 border-blue-500 font-bold">
+                      {account.ensName}
+                    </code>
+                  )}
                   <code className="text-sm bg-accent px-3 py-2 font-mono border-2 border-black font-bold">
                     {account?.address && WalletManager.formatAddress(account.address)}
                   </code>

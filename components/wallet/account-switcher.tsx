@@ -85,8 +85,13 @@ function SortableAccountItem({ account, index, activeAccountIndex, balance, onSw
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-xs truncate">{account.label || "Account"}</span>
-            {account.isWatchOnly && (
+            <span className="font-bold text-xs truncate">
+              {account.ensName || account.label || "Account"}
+            </span>
+            {account.ensName && (
+              <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900 border border-blue-500 text-blue-700 dark:text-blue-300 rounded">ENS</span>
+            )}
+            {account.isWatchOnly && !account.ensName && (
               <span className="text-[10px] px-1.5 py-0.5 bg-muted border border-foreground">WATCH</span>
             )}
           </div>
@@ -164,10 +169,10 @@ export function AccountSwitcher() {
     }
   }
 
-  const handleImportWallet = () => {
+  const handleImportWallet = async () => {
     try {
       setImportError("")
-      addWallet(importValue)
+      await addWallet(importValue)
       setImportValue("")
       setShowImportDialog(false)
     } catch (error) {
@@ -180,7 +185,7 @@ export function AccountSwitcher() {
     if (!file) return
 
     const reader = new FileReader()
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         setCsvImportError("")
         setCsvImportSuccess(0)
@@ -220,12 +225,12 @@ export function AccountSwitcher() {
               // Import as watch-only using address from column 0
               const address = values[0]?.trim()
               if (address) {
-                addWallet(address)
+                await addWallet(address)
                 imported++
               }
             } else if (keyOrMnemonic) {
               // Import with private key or mnemonic
-              addWallet(keyOrMnemonic)
+              await addWallet(keyOrMnemonic)
               imported++
             }
           } catch (error) {
@@ -256,22 +261,24 @@ export function AccountSwitcher() {
   if (!activeAccount) {
     return (
       <>
-        <div className="flex gap-2">
+        <div className="flex gap-1 sm:gap-2">
           <Button
             onClick={() => setShowImportDialog(true)}
             variant="outline"
-            className="gap-2 border-[3px] border-foreground font-black uppercase brutalist-shadow hover:bg-accent h-11 bg-transparent"
+            className="gap-1 sm:gap-2 border-[3px] border-foreground font-black uppercase brutalist-shadow hover:bg-accent h-9 sm:h-11 bg-transparent px-2 sm:px-4"
           >
             <Download className="w-4 h-4" />
-            Import Wallet
+            <span className="hidden sm:inline">Import Wallet</span>
+            <span className="sm:hidden">Import</span>
           </Button>
           <Button
             onClick={() => setShowCsvImportDialog(true)}
             variant="outline"
-            className="gap-2 border-[3px] border-foreground font-black uppercase brutalist-shadow hover:bg-accent h-11 bg-transparent"
+            className="gap-1 sm:gap-2 border-[3px] border-foreground font-black uppercase brutalist-shadow hover:bg-accent h-9 sm:h-11 bg-transparent px-2 sm:px-4"
           >
             <Upload className="w-4 h-4" />
-            Import CSV
+            <span className="hidden sm:inline">Import CSV</span>
+            <span className="sm:hidden">CSV</span>
           </Button>
         </div>
 
@@ -280,12 +287,12 @@ export function AccountSwitcher() {
             <DialogHeader>
               <DialogTitle className="text-xl font-black uppercase">Import Wallet</DialogTitle>
               <DialogDescription className="font-mono font-bold">
-                Import using private key, mnemonic phrase, or Ethereum address (watch-only).
+                Import using private key, mnemonic phrase, ENS name, or Ethereum address (watch-only).
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <Input
-                placeholder="Private key, mnemonic phrase, or 0x address..."
+                placeholder="Private key, mnemonic, ENS name (e.g. vitalik.eth), or 0x address..."
                 value={importValue}
                 onChange={(e) => {
                   setImportValue(e.target.value)
@@ -367,16 +374,18 @@ export function AccountSwitcher() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          className="gap-2 border-[3px] border-foreground font-black uppercase brutalist-shadow hover:bg-accent h-11 bg-transparent"
+          className="gap-1 sm:gap-2 border-[3px] border-foreground font-black uppercase brutalist-shadow hover:bg-accent h-9 sm:h-11 bg-transparent px-2 sm:px-4 max-w-[200px] sm:max-w-none"
         >
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-1 sm:gap-2 min-w-0">
             {activeAccount.isWatchOnly ? (
-              <Eye className="w-4 h-4 flex-shrink-0" />
+              <Eye className="w-4 h-4 shrink-0" />
             ) : (
-              <Wallet className="w-4 h-4 flex-shrink-0" />
+              <Wallet className="w-4 h-4 shrink-0" />
             )}
-            <span className="truncate">{WalletManager.formatAddress(activeAccount.address)}</span>
-            <span className="text-xs font-mono text-muted-foreground">
+            <span className="truncate text-xs sm:text-sm">
+              {activeAccount.ensName || WalletManager.formatAddress(activeAccount.address)}
+            </span>
+            <span className="text-[10px] sm:text-xs font-mono text-muted-foreground hidden sm:inline">
               {balances[activeAccount.address] || "0.0"} ETH
             </span>
           </div>
@@ -454,12 +463,12 @@ export function AccountSwitcher() {
           <DialogHeader>
             <DialogTitle className="text-xl font-black uppercase">Import Wallet</DialogTitle>
             <DialogDescription className="font-mono font-bold">
-              Import using private key, mnemonic phrase, or Ethereum address (watch-only).
+              Import using private key, mnemonic phrase, ENS name, or Ethereum address (watch-only).
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Input
-              placeholder="Private key, mnemonic phrase, or 0x address..."
+              placeholder="Private key, mnemonic, ENS name (e.g. vitalik.eth), or 0x address..."
               value={importValue}
               onChange={(e) => {
                 setImportValue(e.target.value)

@@ -9,6 +9,7 @@ export interface WalletAccount {
   isWatchOnly?: boolean
   derivationIndex?: number
   label?: string
+  ensName?: string
 }
 
 export class WalletManager {
@@ -97,5 +98,15 @@ export class WalletManager {
 
   static formatAddress(address: string): string {
     return `${address.slice(0, 6)}...${address.slice(-4)}`
+  }
+
+  static getDisplayName(account: WalletAccount): string {
+    if (account.ensName) {
+      return account.ensName
+    }
+    if (account.label && account.label !== "Watch Only" && account.label !== "Imported Account") {
+      return account.label
+    }
+    return this.formatAddress(account.address)
   }
 }

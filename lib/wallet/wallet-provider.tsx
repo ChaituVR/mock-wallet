@@ -26,8 +26,8 @@ interface WalletContextType {
   customTokens: Token[]
   setAgentMode: (enabled: boolean) => void
   createNewWallet: () => void
-  importWallet: (privateKeyOrMnemonicOrAddress: string) => void
-  addWallet: (privateKeyOrMnemonicOrAddress: string) => void
+  importWallet: (privateKeyOrMnemonicOrAddress: string) => Promise<void>
+  addWallet: (privateKeyOrMnemonicOrAddress: string) => Promise<void>
   addAccountFromSeed: () => void
   switchAccount: (index: number) => Promise<void>
   reorderAccounts: (newOrder: WalletAccount[]) => void
@@ -188,7 +188,28 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
     setActiveAccountIndex(0)
   }
 
-  const importWallet = (privateKeyOrMnemonicOrAddress: string) => {
+  // Helper to resolve ENS names to addresses
+  const resolveENS = async (ensName: string): Promise<string | null> => {
+    try {
+      // Use Ethereum mainnet for ENS resolution
+      const mainnetProvider = new ethers.JsonRpcProvider("https://1rpc.io/eth")
+      const address = await mainnetProvider.resolveName(ensName)
+      return address
+    } catch (error) {
+      console.error("[v0] Error resolving ENS:", error)
+      return null
+    }
+  }
+
+  // Helper to check if input looks like an ENS name
+  const isENSName = (input: string): boolean => {
+    // Check for common ENS TLDs - primarily .eth but also others
+    // Avoid matching private keys or mnemonics
+    const ensPattern = /^[a-zA-Z0-9-]+\.(eth|xyz|luxe|kred|art|club)$/i
+    return ensPattern.test(input)
+  }
+
+  const importWallet = async (privateKeyOrMnemonicOrAddress: string) => {
     try {
       let wallet: WalletAccount
       const input = privateKeyOrMnemonicOrAddress.trim()
@@ -196,13 +217,22 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
       // Check if it's an Ethereum address (watch-only)
       if (ethers.isAddress(input)) {
         wallet = WalletManager.createWatchOnly(input)
+      } else if (isENSName(input)) {
+        // Try to resolve as ENS name
+        const resolvedAddress = await resolveENS(input)
+        if (!resolvedAddress) {
+          throw new Error(`Could not resolve ENS name: ${input}`)
+        }
+        wallet = WalletManager.createWatchOnly(resolvedAddress)
+        wallet.label = input // Use ENS name as label
       } else {
         // Check if mnemonic or private key
-        const words = input.split(/\s+/)
+        const inputStr = String(input)
+        const words = inputStr.split(/\s+/)
         if (words.length === 12 || words.length === 24) {
-          wallet = WalletManager.importFromMnemonic(input, 0)
+          wallet = WalletManager.importFromMnemonic(inputStr, 0)
         } else {
-          wallet = WalletManager.importFromPrivateKey(input)
+          wallet = WalletManager.importFromPrivateKey(inputStr)
         }
       }
 
@@ -213,11 +243,11 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
       setActiveAccountIndex(0)
     } catch (error) {
       console.error("[v0] Error importing wallet:", error)
-      throw new Error("Invalid private key, mnemonic phrase, or Ethereum address")
+      throw error instanceof Error ? error : new Error("Invalid private key, mnemonic phrase, ENS name, or Ethereum address")
     }
   }
 
-  const addWallet = (privateKeyOrMnemonicOrAddress: string) => {
+  const addWallet = async (privateKeyOrMnemonicOrAddress: string) => {
     try {
       let wallet: WalletAccount
       const input = privateKeyOrMnemonicOrAddress.trim()
@@ -225,13 +255,23 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
       // Check if it's an Ethereum address (watch-only)
       if (ethers.isAddress(input)) {
         wallet = WalletManager.createWatchOnly(input)
+      } else if (isENSName(input)) {
+        // Try to resolve as ENS name
+        const resolvedAddress = await resolveENS(input)
+        if (!resolvedAddress) {
+          throw new Error(`Could not resolve ENS name: ${input}`)
+        }
+        wallet = WalletManager.createWatchOnly(resolvedAddress)
+        wallet.ensName = input // Store ENS name
+        wallet.label = input // Use ENS name as label
       } else {
         // Check if mnemonic or private key
-        const words = input.split(/\s+/)
+        const inputStr = String(input)
+        const words = inputStr.split(/\s+/)
         if (words.length === 12 || words.length === 24) {
-          wallet = WalletManager.importFromMnemonic(input, 0)
+          wallet = WalletManager.importFromMnemonic(inputStr, 0)
         } else {
-          wallet = WalletManager.importFromPrivateKey(input)
+          wallet = WalletManager.importFromPrivateKey(inputStr)
         }
       }
 
@@ -251,7 +291,7 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
       setActiveAccountIndex(newAccounts.length - 1)
     } catch (error) {
       console.error("[v0] Error adding wallet:", error)
-      throw new Error("Invalid private key, mnemonic phrase, or Ethereum address")
+      throw error instanceof Error ? error : new Error("Invalid private key, mnemonic phrase, ENS name, or Ethereum address")
     }
   }
 
