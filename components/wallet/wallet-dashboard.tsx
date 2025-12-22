@@ -77,6 +77,54 @@ export function WalletDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-background relative overflow-hidden">
+      {/* Animated stars background */}
+      <div className="absolute inset-0 overflow-hidden">
+        {/* Large stars */}
+        {[...Array(20)].map((_, i) => (
+          <div
+            key={`star-lg-${i}`}
+            className="absolute w-2 h-2 bg-primary/30 rounded-full animate-pulse"
+            style={{
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 3}s`,
+              animationDuration: `${2 + Math.random() * 3}s`,
+              opacity: 0.4 + Math.random() * 0.6,
+            }}
+          />
+        ))}
+        {/* Medium stars */}
+        {[...Array(30)].map((_, i) => (
+          <div
+            key={`star-md-${i}`}
+            className="absolute w-1.5 h-1.5 bg-primary/20 rounded-full animate-pulse"
+            style={{
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 4}s`,
+              animationDuration: `${1.5 + Math.random() * 2}s`,
+              opacity: 0.3 + Math.random() * 0.5,
+            }}
+          />
+        ))}
+        {/* Small stars */}
+        {[...Array(50)].map((_, i) => (
+          <div
+            key={`star-sm-${i}`}
+            className="absolute w-1 h-1 bg-foreground/10 rounded-full animate-pulse"
+            style={{
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 5}s`,
+              animationDuration: `${1 + Math.random() * 2}s`,
+              opacity: 0.2 + Math.random() * 0.4,
+            }}
+          />
+        ))}
+        {/* Shooting stars */}
+        <div className="absolute top-1/4 right-1/4 w-32 h-0.5 bg-gradient-to-r from-transparent via-primary/40 to-transparent animate-[shooting-star_3s_ease-in-out_infinite]" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-3/4 left-1/3 w-24 h-0.5 bg-gradient-to-r from-transparent via-primary/30 to-transparent animate-[shooting-star_4s_ease-in-out_infinite]" style={{ animationDelay: '5s' }} />
+      </div>
       <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -mr-48 -mt-48 opacity-50" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -ml-48 -mb-48 opacity-50" />
       <div className="relative z-10">

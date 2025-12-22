@@ -1,0 +1,67 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#000000"/>
+      <stop offset="100%" style="stop-color:#1a1a1a"/>
+    </linearGradient>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff"/>
+      <stop offset="100%" style="stop-color:#e0e0e0"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGradient)"/>
+  
+  <!-- Subtle grid pattern -->
+  <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+    <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#ffffff" stroke-width="0.5" opacity="0.05"/>
+  </pattern>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  
+  <!-- Decorative dots -->
+  <circle cx="100" cy="100" r="4" fill="#ffffff" opacity="0.1"/>
+  <circle cx="200" cy="80" r="3" fill="#ffffff" opacity="0.08"/>
+  <circle cx="150" cy="150" r="2" fill="#ffffff" opacity="0.1"/>
+  <circle cx="1100" cy="530" r="4" fill="#ffffff" opacity="0.1"/>
+  <circle cx="1000" cy="550" r="3" fill="#ffffff" opacity="0.08"/>
+  <circle cx="1050" cy="480" r="2" fill="#ffffff" opacity="0.1"/>
+  
+  <!-- Logo - Hexagon icon matching the navbar -->
+  <g transform="translate(100, 195)">
+    <!-- Square background with gradient -->
+    <rect width="120" height="120" fill="#ffffff" stroke="#000000" stroke-width="3"/>
+    <!-- Hexagon path - centered in the 120x120 box -->
+    <g transform="translate(60, 60)">
+      <path d="M0 -45L39 -22.5L39 22.5L0 45L-39 22.5L-39 -22.5Z" 
+            stroke="#000000" 
+            stroke-width="5" 
+            stroke-linecap="round" 
+            stroke-linejoin="round" 
+            fill="none"/>
+    </g>
+  </g>
+  
+  <!-- Main text -->
+  <text x="260" y="250" font-family="system-ui, -apple-system, sans-serif" font-size="64" font-weight="800" fill="#ffffff">Mock Wallet</text>
+  
+  <!-- Tagline -->
+  <text x="260" y="310" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="500" fill="#888888">Web3 Developer Testing Tool</text>
+  
+  <!-- Features list -->
+  <g transform="translate(100, 400)" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#666666">
+    <text x="0" y="0">✓ Multi-Account Management</text>
+    <text x="0" y="40">✓ WalletConnect v2 Integration</text>
+    <text x="400" y="0">✓ Watch-Only Addresses</text>
+    <text x="400" y="40">✓ All Major Testnets</text>
+    <text x="750" y="0">✓ Transaction Testing</text>
+    <text x="750" y="40">✓ HD Wallet Support</text>
+  </g>
+  
+  <!-- URL -->
+  <text x="100" y="580" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="600" fill="#ffffff">mockwallet.dev</text>
+  
+  <!-- Border accent -->
+  <rect x="0" y="0" width="1200" height="4" fill="#ffffff"/>
+  <rect x="0" y="626" width="1200" height="4" fill="#ffffff"/>
+</svg>
