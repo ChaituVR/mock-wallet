@@ -65,19 +65,19 @@ export function WalletSetup() {
             </AlertDescription>
           </Alert>
 
-          <div className="text-center mb-8">
-            <Badge variant="outline" className="mb-4 px-3 py-1 border-2 border-black font-black uppercase">
-              <Sparkles className="w-3 h-3 mr-1" />
+          <div className="text-center mb-10">
+            <Badge variant="outline" className="mb-5 px-4 py-1.5 border-2 border-black font-extrabold uppercase text-xs">
+              <Sparkles className="w-3.5 h-3.5 mr-1.5" />
               Web3 Testing
             </Badge>
-            <h1 className="text-3xl sm:text-5xl md:text-7xl font-black tracking-tighter mb-4 text-balance uppercase leading-none">
+            <h1 className="text-4xl sm:text-6xl md:text-8xl font-extrabold tracking-tight mb-6 text-balance uppercase leading-none">
               The Developer
               <br />
               <span className="text-primary inline-block">Wallet</span> for
               <br />
               Web3 Testing
             </h1>
-            <p className="text-sm sm:text-lg font-mono max-w-2xl mx-auto text-pretty font-bold px-2">
+            <p className="text-base sm:text-xl font-mono max-w-2xl mx-auto text-pretty font-medium px-2 leading-relaxed">
               Test transactions, connect to any dApp via WalletConnect, and debug your Web3 applications. Auto-import
               wallets via URL for seamless CI/CD integration.
             </p>
@@ -122,9 +122,9 @@ export function WalletSetup() {
                     <Button
                       onClick={createNewWallet}
                       size="lg"
-                      className="w-full h-12 font-black uppercase border-2 border-black brutalist-shadow"
+                      className="w-full h-14 font-extrabold uppercase text-base border-2 border-black brutalist-shadow"
                     >
-                      <Sparkles className="w-4 h-4 mr-2" />
+                      <Sparkles className="w-5 h-5 mr-2" />
                       Create Wallet
                     </Button>
                   </TabsContent>
@@ -157,10 +157,10 @@ export function WalletSetup() {
                     <Button
                       onClick={handleImport}
                       size="lg"
-                      className="w-full h-12 font-black uppercase border-2 border-black brutalist-shadow"
+                      className="w-full h-14 font-extrabold uppercase text-base border-2 border-black brutalist-shadow"
                       disabled={!importValue.trim()}
                     >
-                      <Download className="w-4 h-4 mr-2" />
+                      <Download className="w-5 h-5 mr-2" />
                       Import Wallet
                     </Button>
                   </TabsContent>
@@ -170,20 +170,20 @@ export function WalletSetup() {
 
             {/* How It Works Section */}
             <Card className="brutalist-border bg-card">
-              <CardHeader className="pb-3 border-b-2 border-black">
-                <CardTitle className="flex items-center gap-2 text-xl font-black uppercase">
-                  <Terminal className="h-5 w-5" />
+              <CardHeader className="pb-4 border-b-2 border-black">
+                <CardTitle className="flex items-center gap-3 text-xl font-extrabold uppercase">
+                  <Terminal className="h-6 w-6" />
                   How It Works
                 </CardTitle>
-                <CardDescription className="font-mono font-bold">API Documentation</CardDescription>
+                <CardDescription className="font-mono font-semibold text-sm">API Documentation</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4 pt-4">
-                <div className="p-4 bg-secondary border-2 border-black space-y-3">
-                  <div className="flex items-center gap-2 text-sm font-black uppercase">
-                    <Code className="w-4 h-4" />
+              <CardContent className="space-y-5 pt-5">
+                <div className="p-5 bg-secondary border-2 border-black space-y-4">
+                  <div className="flex items-center gap-2 text-sm font-extrabold uppercase">
+                    <Code className="w-5 h-5" />
                     Capabilities
                   </div>
-                  <ul className="space-y-2 text-xs font-mono font-bold">
+                  <ul className="space-y-2.5 text-sm font-mono font-medium leading-relaxed">
                     <li>→ Send test transactions on Sepolia & other testnets</li>
                     <li>→ Connect to dApps via WalletConnect v2</li>
                     <li>→ Sign messages & typed data (EIP-712)</li>
@@ -193,9 +193,9 @@ export function WalletSetup() {
                   </ul>
                 </div>
 
-                <div className="p-4 bg-muted border-2 border-black space-y-3">
-                  <div className="flex items-center gap-2 text-sm font-black uppercase">
-                    <Terminal className="w-4 h-4" />
+                <div className="p-5 bg-muted border-2 border-black space-y-4">
+                  <div className="flex items-center gap-2 text-sm font-extrabold uppercase">
+                    <Terminal className="w-5 h-5" />
                     URL Parameters
                   </div>
                   <div className="space-y-2 text-xs font-mono">

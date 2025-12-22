@@ -1,15 +1,19 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Space_Grotesk, JetBrains_Mono } from "next/font/google"
+import { Inter, JetBrains_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { WalletProvider } from "@/lib/wallet/wallet-provider"
 import "./globals.css"
 
-const _spaceGrotesk = Space_Grotesk({
+const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "700"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-inter",
 })
-const _jetbrains = JetBrains_Mono({ subsets: ["latin"] })
+const jetbrains = JetBrains_Mono({ 
+  subsets: ["latin"],
+  variable: "--font-mono",
+})
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mockwallet.dev"
 const siteName = "Mock Wallet"
@@ -344,7 +348,7 @@ export default function RootLayout({
         {/* <meta name="msvalidate.01" content="YOUR_CODE" /> */}
         {/* <meta name="yandex-verification" content="YOUR_CODE" /> */}
       </head>
-      <body className="font-sans antialiased">
+      <body className={`${inter.variable} ${jetbrains.variable} font-sans antialiased`}>
         <WalletProvider>{children}</WalletProvider>
         <Analytics />
       </body>
