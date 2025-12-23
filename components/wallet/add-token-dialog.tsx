@@ -59,14 +59,16 @@ export function AddTokenDialog({ open, onOpenChange }: AddTokenDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="brutalist-border border-4 border-black dark:border-white">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-black uppercase flex items-center gap-2">
-            <Plus className="w-6 h-6" />
+      <DialogContent className="max-w-md border-[3px] border-foreground shadow-2xl bg-background">
+        <DialogHeader className="border-b-2 border-foreground pb-4">
+          <DialogTitle className="flex items-center gap-3 font-mono uppercase font-black text-lg">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center border-2 border-black shadow-md">
+              <Plus className="h-5 w-5 text-primary-foreground" />
+            </div>
             Add Custom Token
           </DialogTitle>
-          <DialogDescription className="font-mono text-sm">
-            Add any ERC20 token by entering its contract address
+          <DialogDescription className="font-mono text-xs font-semibold mt-2">
+            ADD ANY ERC20 TOKEN BY ENTERING ITS CONTRACT ADDRESS
           </DialogDescription>
         </DialogHeader>
 
@@ -103,9 +105,9 @@ export function AddTokenDialog({ open, onOpenChange }: AddTokenDialogProps) {
             </Alert>
           )}
 
-          <Alert className="brutalist-border border-2 bg-blue-50 dark:bg-blue-950/20 border-blue-600">
-            <AlertCircle className="h-4 w-4 text-blue-600" />
-            <AlertDescription className="text-blue-900 dark:text-blue-300 font-mono text-xs">
+          <Alert className="brutalist-border border-2 bg-orange-50 dark:bg-orange-950/20 border-orange-600">
+            <AlertCircle className="h-4 w-4 text-orange-600" />
+            <AlertDescription className="text-orange-900 dark:text-orange-300 font-mono text-xs">
               <strong>Tip:</strong> Make sure you're on the correct network. The token must exist on the currently
               selected chain.
             </AlertDescription>
@@ -117,14 +119,14 @@ export function AddTokenDialog({ open, onOpenChange }: AddTokenDialogProps) {
             variant="outline"
             onClick={() => handleOpenChange(false)}
             disabled={isAdding}
-            className="border-2 border-black dark:border-white font-bold"
+            className="h-12 border-2 border-black dark:border-white font-mono font-bold uppercase"
           >
             Cancel
           </Button>
           <Button
             onClick={handleAdd}
             disabled={isAdding || !tokenAddress.trim()}
-            className="border-2 border-black font-bold"
+            className="h-12 border-2 border-black font-mono font-bold uppercase bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary"
           >
             {isAdding ? (
               <>

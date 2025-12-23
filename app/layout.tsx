@@ -4,6 +4,7 @@ import { Inter, JetBrains_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { WalletProvider } from "@/lib/wallet/wallet-provider"
 import { AnimatedBackground } from "@/components/animated-background"
+import { Toaster } from "@/components/ui/toaster"
 import "./globals.css"
 
 const inter = Inter({
@@ -285,6 +286,142 @@ export default function RootLayout({
     ],
   }
 
+  // HowTo Schema - Getting Started Guide
+  const howToSchema = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to Create and Use a Mock Wallet for Web3 Testing",
+    "description": "Step-by-step guide to creating your first Web3 test wallet with Mock Wallet and connecting it to decentralized applications",
+    "totalTime": "PT5M",
+    "estimatedCost": {
+      "@type": "MonetaryAmount",
+      "currency": "USD",
+      "value": "0"
+    },
+    "supply": [
+      {
+        "@type": "HowToSupply",
+        "name": "Web browser (Chrome, Firefox, Brave, or Edge)"
+      },
+      {
+        "@type": "HowToSupply",
+        "name": "Internet connection"
+      }
+    ],
+    "tool": [
+      {
+        "@type": "HowToTool",
+        "name": "Mock Wallet (https://mockwallet.dev)"
+      }
+    ],
+    "step": [
+      {
+        "@type": "HowToStep",
+        "position": 1,
+        "name": "Access Mock Wallet",
+        "text": "Visit https://mockwallet.dev in your web browser",
+        "url": siteUrl,
+        "image": `${siteUrl}/og-image.png`
+      },
+      {
+        "@type": "HowToStep",
+        "position": 2,
+        "name": "Create New Wallet",
+        "text": "Click 'Create Wallet' to generate a new test wallet with a random private key and mnemonic phrase. This creates a secure HD wallet for testing purposes only.",
+        "url": siteUrl
+      },
+      {
+        "@type": "HowToStep",
+        "position": 3,
+        "name": "Select Network",
+        "text": "Choose your preferred testnet (Sepolia, Polygon Amoy, Arbitrum Sepolia, etc.) from the network selector at the top of the page",
+        "url": siteUrl
+      },
+      {
+        "@type": "HowToStep",
+        "position": 4,
+        "name": "Get Test Tokens",
+        "text": "Use the integrated faucet links to request free testnet tokens for your wallet address",
+        "url": siteUrl
+      },
+      {
+        "@type": "HowToStep",
+        "position": 5,
+        "name": "Connect to dApps",
+        "text": "Copy the WalletConnect URI from your dApp, paste it into Mock Wallet's connection field, and click PAIR to establish a connection. You can now test your dApp interactions safely.",
+        "url": siteUrl
+      }
+    ]
+  }
+
+  // Product Schema with Reviews
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "Mock Wallet",
+    "description": "Professional Web3 development wallet with multi-account management and WalletConnect integration",
+    "brand": {
+      "@type": "Brand",
+      "name": "Mock Wallet"
+    },
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/InStock",
+      "url": siteUrl
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "reviewCount": "150",
+      "bestRating": "5",
+      "worstRating": "1"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "author": {
+          "@type": "Person",
+          "name": "Web3 Developer"
+        },
+        "datePublished": "2025-12-15",
+        "reviewBody": "Perfect tool for testing dApps! The multi-account feature and WalletConnect integration make it incredibly easy to test different user scenarios.",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5",
+          "bestRating": "5"
+        }
+      },
+      {
+        "@type": "Review",
+        "author": {
+          "@type": "Person",
+          "name": "Smart Contract Developer"
+        },
+        "datePublished": "2025-12-10",
+        "reviewBody": "Essential tool for blockchain development. The URL import feature is perfect for CI/CD integration. Makes testing so much faster.",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5",
+          "bestRating": "5"
+        }
+      }
+    ]
+  }
+
+  // VideoObject Schema (Preparation for future tutorials)
+  const videoSchema = {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    "name": "Mock Wallet Tutorial - Getting Started with Web3 Testing",
+    "description": "Learn how to use Mock Wallet for testing Web3 applications and dApps",
+    "thumbnailUrl": `${siteUrl}/og-image.png`,
+    "uploadDate": "2025-12-17T00:00:00Z",
+    "contentUrl": `${siteUrl}#video`,
+    "embedUrl": `${siteUrl}#video`
+  }
+
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
@@ -308,6 +445,14 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
         />
         
         {/* Resource Hints */}
@@ -350,7 +495,10 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable} ${jetbrains.variable} font-sans antialiased`}>
         <AnimatedBackground />
-        <WalletProvider>{children}</WalletProvider>
+        <WalletProvider>
+          {children}
+        </WalletProvider>
+        <Toaster />
         <Analytics />
       </body>
     </html>

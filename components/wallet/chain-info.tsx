@@ -23,10 +23,12 @@ export function ChainInfo() {
   }
 
   return (
-    <Card className="border-border/50">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Network className="h-5 w-5" />
+    <Card className="brutalist-border shadow-2xl bg-gradient-to-br from-card to-primary/5 border-[3px]">
+      <CardHeader className="border-b-2 border-foreground bg-gradient-to-r from-muted/50 via-primary/5 to-primary/10">
+        <CardTitle className="flex items-center gap-3 font-mono uppercase font-black text-lg">
+          <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center border-2 border-black shadow-md">
+            <Network className="h-5 w-5 text-primary-foreground" />
+          </div>
           Current Network Details
         </CardTitle>
       </CardHeader>

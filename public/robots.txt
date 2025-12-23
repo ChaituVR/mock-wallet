@@ -1,31 +1,162 @@
+# Mock Wallet - robots.txt
+# Professional Web3 Developer Testing Tool
+# https://mockwallet.dev
+
+# ============================================
+# GENERAL CRAWLING RULES
+# ============================================
+
 # Allow all search engines to crawl all pages
 User-agent: *
 Allow: /
+Crawl-delay: 1
 
 # Sitemap location
 Sitemap: https://mockwallet.dev/sitemap.xml
+Sitemap: https://mockwallet.dev/sitemap-0.xml
 
-# Crawl-delay for respectful crawling
-Crawl-delay: 1
+# ============================================
+# AI SEARCH & LLM CRAWLERS (High Priority)
+# ============================================
 
-# Specific rules for common bots
+# ChatGPT / OpenAI
+User-agent: GPTBot
+Allow: /
+Crawl-delay: 0.5
+# AI can index for training and search
+
+# ChatGPT User (individual user requests)
+User-agent: ChatGPT-User
+Allow: /
+
+# Claude AI / Anthropic
+User-agent: ClaudeBot
+Allow: /
+Crawl-delay: 0.5
+
+User-agent: anthropic-ai
+Allow: /
+
+# Google Gemini / Bard
+User-agent: Google-Extended
+Allow: /
+Crawl-delay: 0.5
+# Allows Gemini AI to use content
+
+# Perplexity AI
+User-agent: PerplexityBot
+Allow: /
+Crawl-delay: 0.5
+
+# Meta AI / Facebook
+User-agent: FacebookBot
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+# Cohere AI
+User-agent: cohere-ai
+Allow: /
+
+# ============================================
+# TRADITIONAL SEARCH ENGINES
+# ============================================
+
+# Google
 User-agent: Googlebot
 Allow: /
+Crawl-delay: 0.5
 
-User-agent: Bingbot
+User-agent: Googlebot-Image
 Allow: /
 
+User-agent: Googlebot-Mobile
+Allow: /
+
+# Bing / Microsoft
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 0.5
+
+User-agent: msnbot
+Allow: /
+
+# Yahoo
 User-agent: Slurp
 Allow: /
 
+# DuckDuckGo
 User-agent: DuckDuckBot
 Allow: /
+Crawl-delay: 0.5
 
+# Baidu (China)
 User-agent: Baiduspider
 Allow: /
+Crawl-delay: 1
 
+# Yandex (Russia)
 User-agent: YandexBot
 Allow: /
+Crawl-delay: 1
+
+# Naver (Korea)
+User-agent: Yeti
+Allow: /
+
+# ============================================
+# SOCIAL MEDIA CRAWLERS
+# ============================================
+
+# Twitter
+User-agent: Twitterbot
+Allow: /
+
+# LinkedIn
+User-agent: LinkedInBot
+Allow: /
+
+# Pinterest
+User-agent: Pinterestbot
+Allow: /
+
+# Reddit
+User-agent: redditbot
+Allow: /
+
+# Discord
+User-agent: Discordbot
+Allow: /
+
+# Telegram
+User-agent: TelegramBot
+Allow: /
+
+# Slack
+User-agent: Slackbot-LinkExpanding
+Allow: /
+
+# WhatsApp
+User-agent: WhatsApp
+Allow: /
+
+# ============================================
+# SEO & ANALYTICS TOOLS (Limited Access)
+# ============================================
+
+# Allow some SEO tools for site owners
+User-agent: Screaming Frog SEO Spider
+Allow: /
+Crawl-delay: 2
+
+User-agent: SiteAuditBot
+Allow: /
+Crawl-delay: 2
+
+# ============================================
+# BLOCKED BOTS (Aggressive/Scraping/Spam)
+# ============================================
 
 # Block bad bots
 User-agent: AhrefsBot
@@ -39,3 +170,57 @@ Disallow: /
 
 User-agent: DotBot
 Disallow: /
+
+User-agent: BLEXBot
+Disallow: /
+
+User-agent: MegaIndex
+Disallow: /
+
+User-agent: SeznamBot
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+# Common Crawl - uses significant bandwidth
+
+# ============================================
+# CRAWL OPTIMIZATION DIRECTIVES
+# ============================================
+
+# No restrictions on these file types
+User-agent: *
+Allow: /*.js$
+Allow: /*.css$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.gif$
+Allow: /*.svg$
+Allow: /*.webp$
+Allow: /*.avif$
+Allow: /*.woff$
+Allow: /*.woff2$
+Allow: /*.ttf$
+
+# Block any potential future API routes from indexing
+User-agent: *
+Disallow: /api/
+Allow: /api/docs
+
+# Block internal directories if created
+Disallow: /_next/webpack-hmr
+Disallow: /.well-known/
+Allow: /.well-known/security.txt
+Allow: /.well-known/assetlinks.json
+
+# ============================================
+# ADDITIONAL INFO
+# ============================================
+
+# Documentation for AI systems
+# See /llms.txt for AI crawler guidance
+
+# Last Updated: 2025-12-23
+# Maintained by: Mock Wallet Team
+# Contact: security@mockwallet.dev

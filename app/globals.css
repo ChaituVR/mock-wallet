@@ -17,37 +17,36 @@
 }
 
 :root {
-  /* Brutalist color palette: black, white, and red accent - LIGHT MODE */
-  --background: oklch(1 0 0); /* Pure white */
-  --foreground: oklch(0 0 0); /* Pure black */
-  --card: oklch(0.98 0 0); /* Off-white */
-  --card-foreground: oklch(0 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0 0 0);
-  --primary: oklch(0.55 0.22 25); /* Bold red */
+  /* Modern brutalist palette with vibrant colors */
+  --background: oklch(0.99 0 0); /* Near white */
+  --foreground: oklch(0.15 0 0); /* Dark gray, not pure black */
+  --card: oklch(1 0 0); /* Pure white cards - NO transparency */
+  --card-foreground: oklch(0.15 0 0);
+  --popover: oklch(1 0 0); /* Solid popover - NO transparency */
+  --popover-foreground: oklch(0.15 0 0);
+  --primary: oklch(0.60 0.22 35); /* Vibrant coral/orange */
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.92 0 0); /* Light gray */
-  --secondary-foreground: oklch(0 0 0);
-  --muted: oklch(0.94 0 0);
-  --muted-foreground: oklch(0.4 0 0);
-  --accent: oklch(0.95 0.02 85); /* Subtle yellow tint */
-  --accent-foreground: oklch(0 0 0);
-  --destructive: oklch(0.55 0.22 25);
+  --secondary: oklch(0.92 0.02 80); /* Warm yellow tint */
+  --secondary-foreground: oklch(0.15 0 0);
+  --muted: oklch(0.96 0 0);
+  --muted-foreground: oklch(0.48 0 0);
+  --accent: oklch(0.88 0.12 75); /* Warm amber accent */
+  --accent-foreground: oklch(0.15 0 0);
+  --destructive: oklch(0.58 0.24 27); /* Vibrant red-orange */
   --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0 0 0); /* Black borders */
+  --border: oklch(0.22 0 0); /* Dark gray borders */
   --input: oklch(1 0 0);
-  --ring: oklch(0.55 0.22 25);
-  --success: oklch(0 0 0);
+  --ring: oklch(0.60 0.22 35);
+  --success: oklch(0.15 0 0);
   --success-foreground: oklch(1 0 0);
-  /* Reduced yellow saturation and made warning less prominent */
-  --warning: oklch(0.92 0.08 85); /* Desaturated yellow */
-  --warning-foreground: oklch(0 0 0); /* Black text for contrast */
+  --warning: oklch(0.94 0.12 90); /* Warmer yellow */
+  --warning-foreground: oklch(0.15 0 0);
   --radius: 0rem; /* No rounded corners */
-  --sidebar: oklch(0.98 0 0);
-  --sidebar-foreground: oklch(0 0 0);
-  --sidebar-primary: oklch(0.55 0.22 25);
+  --sidebar: oklch(0.99 0 0);
+  --sidebar-foreground: oklch(0.15 0 0);
+  --sidebar-primary: oklch(0.60 0.22 35);
   --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.92 0 0);
+  --sidebar-accent: oklch(0.95 0 0);
   --sidebar-accent-foreground: oklch(0 0 0);
   --sidebar-border: oklch(0 0 0);
   --sidebar-ring: oklch(0.55 0.22 25);
@@ -55,42 +54,41 @@
   --shadow-color: oklch(0 0 0);
 }
 
-/* Inverted brutalist dark mode */
+/* Modern dark mode with rich colors */
 .dark {
-  --background: oklch(0.12 0 0); /* Near black */
-  --foreground: oklch(0.98 0 0); /* Off-white */
-  --card: oklch(0.18 0 0); /* Dark gray */
-  --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.15 0 0);
-  --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.65 0.22 25); /* Brighter red for dark mode */
-  --primary-foreground: oklch(0.98 0 0);
-  --secondary: oklch(0.25 0 0);
-  --secondary-foreground: oklch(0.98 0 0);
-  --muted: oklch(0.22 0 0);
-  --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.35 0.04 85); /* Darker yellow tint */
-  --accent-foreground: oklch(0.98 0 0);
-  --destructive: oklch(0.55 0.22 25);
-  --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.98 0 0); /* White borders in dark mode */
-  --input: oklch(0.2 0 0);
-  --ring: oklch(0.65 0.22 25);
-  --success: oklch(0.98 0 0);
-  --success-foreground: oklch(0.12 0 0);
-  /* Adjusted dark mode warning color for better contrast */
-  --warning: oklch(0.75 0.12 85); /* Lighter yellow for dark mode */
-  --warning-foreground: oklch(0 0 0); /* Keep black text for contrast */
-  --sidebar: oklch(0.15 0 0);
-  --sidebar-foreground: oklch(0.98 0 0);
-  --sidebar-primary: oklch(0.65 0.22 25);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.22 0 0);
-  --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(0.98 0 0);
-  --sidebar-ring: oklch(0.65 0.22 25);
+  --background: oklch(0.14 0 0); /* Rich dark background */
+  --foreground: oklch(0.95 0 0); /* Soft white */
+  --card: oklch(0.19 0 0); /* Solid dark cards - NO transparency */
+  --card-foreground: oklch(0.95 0 0);
+  --popover: oklch(0.18 0 0); /* Solid popover - NO transparency */
+  --popover-foreground: oklch(0.95 0 0);
+  --primary: oklch(0.68 0.24 35); /* Bright coral/orange */
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.28 0.02 80);
+  --secondary-foreground: oklch(0.95 0 0);
+  --muted: oklch(0.23 0 0);
+  --muted-foreground: oklch(0.62 0 0);
+  --accent: oklch(0.48 0.12 75); /* Warm amber */
+  --accent-foreground: oklch(0.95 0 0);
+  --destructive: oklch(0.62 0.26 27); /* Vibrant red */
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.85 0 0); /* Lighter borders for dark mode */
+  --input: oklch(0.21 0 0);
+  --ring: oklch(0.68 0.24 35);
+  --success: oklch(0.95 0 0);
+  --success-foreground: oklch(0.14 0 0);
+  --warning: oklch(0.78 0.14 90); /* Brighter yellow */
+  --warning-foreground: oklch(0.12 0 0);
+  --sidebar: oklch(0.16 0 0);
+  --sidebar-foreground: oklch(0.95 0 0);
+  --sidebar-primary: oklch(0.68 0.24 35);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.23 0 0);
+  --sidebar-accent-foreground: oklch(0.95 0 0);
+  --sidebar-border: oklch(0.85 0 0);
+  --sidebar-ring: oklch(0.68 0.24 35);
   /* Shadow colors for dark mode */
-  --shadow-color: oklch(0.98 0 0);
+  --shadow-color: oklch(0.08 0 0);
 }
 
 @theme inline {
@@ -157,18 +155,31 @@
   }
 }
 
-/* Updated brutalist utilities to use CSS variable for shadow */
+/* Enhanced brutalist utilities with depth */
 .brutalist-border {
   border: 3px solid var(--border);
-  box-shadow: 6px 6px 0px var(--shadow-color);
+  box-shadow: 6px 6px 0px 0px var(--shadow-color);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.brutalist-border:hover {
+  box-shadow: 10px 10px 0px 0px var(--shadow-color);
+  transform: translate(-2px, -2px);
 }
 
 .brutalist-shadow {
-  box-shadow: 8px 8px 0px var(--shadow-color);
+  box-shadow: 10px 10px 0px 0px var(--shadow-color);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .brutalist-shadow-sm {
-  box-shadow: 4px 4px 0px var(--shadow-color);
+  box-shadow: 5px 5px 0px 0px var(--shadow-color);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.brutalist-shadow-lg {
+  box-shadow: 15px 15px 0px 0px var(--shadow-color);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .rotate-slight {

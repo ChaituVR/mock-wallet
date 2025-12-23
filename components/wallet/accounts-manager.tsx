@@ -185,7 +185,7 @@ export function AccountsManager() {
                       {account.ensName && (
                         <Badge
                           variant="outline"
-                          className="text-[10px] px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900 border border-blue-500 text-blue-700 dark:text-blue-300 font-mono"
+                          className="text-[10px] px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900 border border-orange-500 text-orange-700 dark:text-orange-300 font-mono"
                         >
                           ENS
                         </Badge>

@@ -484,7 +484,7 @@ export function WalletConnectConnector() {
               </Badge>
             )}
             {initStatus === "initializing" && (
-              <Badge variant="outline" className="border-2 border-warning text-warning font-mono text-xs font-bold">
+              <Badge variant="outline" className="border-2 border-warning  font-mono text-xs font-bold">
                 INIT
               </Badge>
             )}

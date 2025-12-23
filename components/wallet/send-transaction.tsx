@@ -10,6 +10,7 @@ import { useWallet } from "@/lib/wallet/wallet-provider"
 import { ethers } from "ethers"
 import { Send, Loader2, CheckCircle2, AlertCircle, ExternalLink, Eye } from "lucide-react"
 import { getChainById } from "@/lib/wallet/chain-config"
+import { useToast } from "@/components/ui/use-toast"
 
 interface SendTransactionProps {
   open: boolean
@@ -18,6 +19,7 @@ interface SendTransactionProps {
 
 export function SendTransaction({ open, onOpenChange }: SendTransactionProps) {
   const { activeAccount, getProvider, refreshBalance, chainId } = useWallet()
+  const { toast } = useToast()
   const [recipient, setRecipient] = useState("")
   const [amount, setAmount] = useState("")
   const [gasLimit, setGasLimit] = useState("21000")
@@ -106,11 +108,25 @@ export function SendTransaction({ open, onOpenChange }: SendTransactionProps) {
       setSuccess(true)
       await refreshBalance()
 
+      // Show success toast
+      toast({
+        title: "✓ Transaction Sent",
+        description: `Sent ${amount} ${chain?.nativeCurrency.symbol} to ${resolvedRecipient.slice(0, 6)}...${resolvedRecipient.slice(-4)}`,
+        variant: "success",
+      })
+
       console.log("[v0] Transaction confirmed")
     } catch (err) {
       console.error("[v0] Transaction error:", err)
       const errorMessage = err instanceof Error ? err.message : "Transaction failed"
       setError(errorMessage)
+      
+      // Show error toast
+      toast({
+        title: "✗ Transaction Failed",
+        description: errorMessage,
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }

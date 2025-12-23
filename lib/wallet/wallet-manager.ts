@@ -9,6 +9,7 @@ export interface WalletAccount {
   isWatchOnly?: boolean
   derivationIndex?: number
   label?: string
+  color?: string
   ensName?: string
 }
 

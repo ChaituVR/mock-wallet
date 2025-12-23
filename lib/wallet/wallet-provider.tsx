@@ -33,6 +33,7 @@ interface WalletContextType {
   addAccountFromSeed: () => void
   switchAccount: (index: number) => Promise<void>
   reorderAccounts: (newOrder: WalletAccount[]) => void
+  updateAccountLabel: (index: number, label: string, color: string) => void
   disconnectWallet: () => void
   switchChain: (chainId: number) => Promise<void>
   setProjectId: (id: string) => void
@@ -160,6 +161,7 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
       if (!provider) {
         console.log("[v0] No provider available for chainId:", useChainId)
         setBalance("0.0")
+        setBalanceLoading(false)
         return
       }
 
@@ -358,6 +360,19 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
     }
   }
 
+  const updateAccountLabel = (index: number, label: string, color: string) => {
+    const newAccounts = [...accounts]
+    if (newAccounts[index]) {
+      newAccounts[index] = {
+        ...newAccounts[index],
+        label,
+        color,
+      }
+      WalletManager.saveAccounts(newAccounts)
+      setAccounts(newAccounts)
+    }
+  }
+
   const disconnectWallet = () => {
     if (accounts.length <= 1) {
       // If only one account, clear all
@@ -543,6 +558,7 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
         addAccountFromSeed,
         switchAccount,
         reorderAccounts,
+        updateAccountLabel,
         disconnectWallet,
         switchChain,
         setProjectId,
