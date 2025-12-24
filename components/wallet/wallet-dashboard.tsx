@@ -24,6 +24,7 @@ import {
   Users,
   Loader2,
   Check,
+  Command,
 } from "lucide-react"
 import { WalletHeader } from "./wallet-header"
 import { ChainSelector } from "./chain-selector"
@@ -425,6 +426,19 @@ export function WalletDashboard() {
       <SendTransaction open={showSendTx} onOpenChange={setShowSendTx} />
       <ReceiveDialog open={showReceive} onOpenChange={setShowReceive} />
       <TransactionHistory open={showHistory} onOpenChange={setShowHistory} />
+
+      {/* Mobile Command Palette Button */}
+      <Button
+        onClick={() => {
+          if (typeof window !== 'undefined') {
+            (window as any).openCommandPalette?.()
+          }
+        }}
+        className="fixed bottom-6 right-6 md:hidden w-14 h-14 rounded-full shadow-brutal border-[3px] border-foreground bg-primary hover:bg-primary/90 z-50 p-0"
+        title="Open command palette"
+      >
+        <Command className="w-6 h-6 text-primary-foreground" />
+      </Button>
     </div>
     </>
   )

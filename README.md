@@ -26,7 +26,8 @@ Mock Wallet is a professional-grade Web3 testing wallet designed specifically fo
 - **Unlimited Wallets** - Create and manage multiple test accounts
 - **HD Wallet Support** - Hierarchical deterministic wallet generation
 - **Account Switcher** - Switch between accounts instantly with drag-and-drop reordering
-- **Watch-Only Mode** - Monitor addresses without private key access
+- **Address Impersonation** - View dApps as any Ethereum address without private keys
+- **Watch-Only Mode** - Monitor addresses for portfolio tracking or UI testing
 - **CSV Import/Export** - Bulk wallet management for teams
 
 ### 🔗 WalletConnect v2 Integration

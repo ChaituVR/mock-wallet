@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { useWallet } from "@/lib/wallet/wallet-provider"
-import { Wallet, AlertCircle, Code, Terminal, Sparkles, Hexagon, Download, UserPlus } from "lucide-react"
+import { Wallet, AlertCircle, Code, Terminal, Sparkles, Hexagon, Download, UserPlus, MessageSquarePlus } from "lucide-react"
 import { AccountSwitcher } from "./account-switcher"
 import { ThemeToggle } from "@/components/theme-toggle"
 
@@ -132,7 +132,7 @@ export function WalletSetup() {
                   <TabsContent value="import" className="space-y-4">
                     <div className="p-4 bg-secondary border-2 border-black">
                       <p className="text-sm font-mono font-bold">
-                        Import using private key, mnemonic phrase, ENS name, or Ethereum address (watch-only).
+                        Import using private key, mnemonic phrase, ENS name, or any Ethereum address (watch-only/impersonation).
                       </p>
                     </div>
                     <div className="space-y-2">
@@ -189,7 +189,7 @@ export function WalletSetup() {
                     <li>→ Sign messages & typed data (EIP-712)</li>
                     <li>→ View transaction history with block explorer links</li>
                     <li>→ Multi-chain support (Sepolia, Polygon, Base, etc.)</li>
-                    <li>→ Watch-only mode for any Ethereum address</li>
+                    <li>→ Watch-only mode for any Ethereum address (impersonate whales, users, etc.)</li>
                   </ul>
                 </div>
 
@@ -247,9 +247,25 @@ export function WalletSetup() {
               <div className="w-10 h-10 bg-accent flex items-center justify-center mb-3 border-2 border-black">
                 <Code className="w-5 h-5 text-accent-foreground" />
               </div>
-              <h3 className="font-black uppercase mb-1">Watch-Only</h3>
+              <h3 className="font-black uppercase mb-1">Watch-Only / Impersonation</h3>
               <p className="text-sm font-mono">Monitor any Ethereum address without private keys</p>
             </div>
+          </div>
+
+          {/* Footer with Feedback Link */}
+          <div className="mt-8 pt-6 border-t-2 border-border text-center">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.open('https://tally.so/r/jabg9R', '_blank')}
+              className="gap-2 font-mono border-2 border-foreground"
+            >
+              <MessageSquarePlus className="w-4 h-4" />
+              Request Feature or Report Issue
+            </Button>
+            <p className="text-xs text-muted-foreground mt-2 font-mono">
+              Help us improve MockWallet
+            </p>
           </div>
         </div>
       </div>

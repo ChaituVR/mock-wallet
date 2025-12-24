@@ -8,9 +8,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useWallet } from "@/lib/wallet/wallet-provider"
 import { ethers } from "ethers"
-import { Send, Loader2, CheckCircle2, AlertCircle, ExternalLink, Eye } from "lucide-react"
+import { Send, Loader2, CheckCircle2, AlertCircle, ExternalLink, Eye, PlayCircle } from "lucide-react"
 import { getChainById } from "@/lib/wallet/chain-config"
 import { useToast } from "@/components/ui/use-toast"
+import { TransactionSimulator, type TransactionData } from "./transaction-simulator"
+import { DataVerifier } from "./data-verifier"
 
 interface SendTransactionProps {
   open: boolean
@@ -27,6 +29,8 @@ export function SendTransaction({ open, onOpenChange }: SendTransactionProps) {
   const [txHash, setTxHash] = useState("")
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
+  const [showSimulator, setShowSimulator] = useState(false)
+  const [pendingTransaction, setPendingTransaction] = useState<TransactionData | null>(null)
 
   const chain = getChainById(chainId)
 
@@ -37,11 +41,48 @@ export function SendTransaction({ open, onOpenChange }: SendTransactionProps) {
     setError("")
     setTxHash("")
     setSuccess(false)
+    setShowSimulator(false)
+    setPendingTransaction(null)
   }
 
   const handleClose = () => {
     onOpenChange(false)
     setTimeout(resetForm, 200)
+  }
+
+  const handleSimulate = async () => {
+    if (!activeAccount || !recipient || !amount) return
+
+    setError("")
+    
+    try {
+      // Resolve ENS name if needed or validate recipient address
+      let resolvedRecipient = recipient.trim()
+      const ensPattern = /^[a-zA-Z0-9-]+\.(eth|xyz|luxe|kred|art|club)$/i
+      
+      if (ensPattern.test(resolvedRecipient)) {
+        const mainnetProvider = new ethers.JsonRpcProvider("https://eth.llamarpc.com")
+        const resolvedAddress = await mainnetProvider.resolveName(resolvedRecipient)
+        if (!resolvedAddress) {
+          throw new Error(`Could not resolve ENS name: ${resolvedRecipient}`)
+        }
+        resolvedRecipient = resolvedAddress
+      } else if (!ethers.isAddress(resolvedRecipient)) {
+        throw new Error("Invalid recipient address or ENS name")
+      }
+
+      const tx: TransactionData = {
+        to: resolvedRecipient,
+        from: activeAccount.address,
+        value: ethers.parseEther(amount).toString(),
+        gasLimit: gasLimit,
+      }
+
+      setPendingTransaction(tx)
+      setShowSimulator(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to prepare transaction")
+    }
   }
 
   const sendTransaction = async () => {
@@ -141,6 +182,7 @@ export function SendTransaction({ open, onOpenChange }: SendTransactionProps) {
   const isWatchOnly = activeAccount?.isWatchOnly
 
   return (
+    <>
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-md border-[3px] border-foreground shadow-2xl bg-background">
         <DialogHeader className="border-b-2 border-foreground pb-4">
@@ -250,6 +292,23 @@ export function SendTransaction({ open, onOpenChange }: SendTransactionProps) {
                 <p className="font-mono text-xs text-muted-foreground">DEFAULT: 21000 FOR SIMPLE TRANSFERS</p>
               </div>
 
+              {/* Transaction Data Verifier - Show when transaction is ready */}
+              {recipient && amount && ethers.isAddress(recipient) && (
+                <DataVerifier
+                  data={{
+                    from: activeAccount?.address,
+                    to: recipient,
+                    value: `0x${ethers.parseEther(amount).toString(16)}`,
+                    valueDecimal: ethers.parseEther(amount).toString(),
+                    gasLimit: gasLimit,
+                    chainId: chainId,
+                    chainName: chain?.name
+                  }}
+                  title="Transaction Preview"
+                  className="mt-4"
+                />
+              )}
+
               {error && (
                 <Alert variant="destructive" className="border-[3px] border-foreground">
                   <AlertCircle className="h-4 w-4" />
@@ -274,6 +333,15 @@ export function SendTransaction({ open, onOpenChange }: SendTransactionProps) {
                   CANCEL
                 </Button>
                 <Button
+                  variant="outline"
+                  onClick={handleSimulate}
+                  className="flex-1 bg-blue-500/10 border-[3px] border-blue-500 font-black uppercase hover:bg-blue-500/20 transition-colors text-blue-500"
+                  disabled={isLoading || !recipient || !amount || isWatchOnly}
+                >
+                  <PlayCircle className="h-4 w-4 mr-2" />
+                  SIMULATE
+                </Button>
+                <Button
                   onClick={sendTransaction}
                   className="flex-1 border-[3px] border-foreground font-black uppercase bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary transition-all shadow-md"
                   disabled={isLoading || !recipient || !amount || isWatchOnly}
@@ -296,5 +364,23 @@ export function SendTransaction({ open, onOpenChange }: SendTransactionProps) {
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Transaction Simulator */}
+    <TransactionSimulator
+      open={showSimulator}
+      onOpenChange={setShowSimulator}
+      transaction={pendingTransaction}
+      chainId={chainId}
+      fromAddress={activeAccount?.address || ""}
+      onProceed={() => {
+        setShowSimulator(false)
+        sendTransaction()
+      }}
+      onCancel={() => {
+        setShowSimulator(false)
+        setPendingTransaction(null)
+      }}
+    />
+  </>
   )
 }

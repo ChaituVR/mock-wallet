@@ -3,10 +3,10 @@ import Link from "next/link"
 
 export const metadata: Metadata = {
   title: "Features - Mock Wallet",
-  description: "Explore all features of Mock Wallet - Multi-account management, WalletConnect v2 integration, watch-only addresses, agent mode, URL import for CI/CD, and comprehensive testnet support for Web3 developers.",
+  description: "Explore all features of Mock Wallet - Transaction Simulator, Multi-account management, WalletConnect v2 integration, address impersonation & watch-only mode, agent mode, URL import for CI/CD, and comprehensive testnet support for Web3 developers.",
   openGraph: {
     title: "Mock Wallet Features - Complete Feature List",
-    description: "Explore all features of Mock Wallet - Multi-account management, WalletConnect v2 integration, watch-only addresses, agent mode, URL import for CI/CD, and comprehensive testnet support for Web3 developers.",
+    description: "Explore all features of Mock Wallet - Transaction Simulator, Multi-account management, WalletConnect v2 integration, address impersonation & watch-only mode, agent mode, URL import for CI/CD, and comprehensive testnet support for Web3 developers.",
   },
 }
 
@@ -80,14 +80,15 @@ export default function FeaturesPage() {
             <div className="border-4 border-border bg-card p-6 hover:shadow-lg transition-shadow">
               <h2 className="text-2xl font-black uppercase mb-3 flex items-center gap-2">
                 <span className="text-3xl">👁️</span>
-                Watch-Only Mode
+                Watch-Only Mode / Address Impersonation
               </h2>
               <ul className="space-y-2 text-base">
-                <li>✓ Monitor any Ethereum address</li>
-                <li>✓ No private key required</li>
-                <li>✓ View balance and transaction history</li>
-                <li>✓ Perfect for portfolio tracking</li>
-                <li>✓ Zero security risk</li>
+                <li>✓ Impersonate any Ethereum address (whales, users, etc.)</li>
+                <li>✓ View dApp UI from any address perspective</li>
+                <li>✓ No private key required - zero security risk</li>
+                <li>✓ Monitor balance and transaction history</li>
+                <li>✓ Connect to dApps via WalletConnect</li>
+                <li>✓ Perfect for UI testing and portfolio tracking</li>
               </ul>
             </div>
 
@@ -118,6 +119,20 @@ export default function FeaturesPage() {
                 <li>✓ Zero manual setup required</li>
               </ul>
             </div>
+
+            <div className="border-4 border-border bg-card p-6 hover:shadow-lg transition-shadow">
+              <h2 className="text-2xl font-black uppercase mb-3 flex items-center gap-2">
+                <span className="text-3xl">🎮</span>
+                Transaction Simulator
+              </h2>
+              <ul className="space-y-2 text-base">
+                <li>✓ Preview transactions before signing</li>
+                <li>✓ Gas estimation and cost analysis</li>
+                <li>✓ Risk assessment and warnings</li>
+                <li>✓ Decode ERC20 transfers and approvals</li>
+                <li>✓ Detect unlimited approvals</li>
+              </ul>
+            </div>
           </section>
 
           {/* Developer Tools */}
@@ -142,6 +157,13 @@ export default function FeaturesPage() {
                 <h3 className="text-lg font-black uppercase mb-2">Faucet Integration</h3>
                 <p className="text-sm">
                   Quick access to testnet faucets for all supported networks - get test tokens instantly.
+                </p>
+              </div>
+
+              <div className="border-2 border-border bg-accent/20 p-5">
+                <h3 className="text-lg font-black uppercase mb-2">Transaction Simulator</h3>
+                <p className="text-sm">
+                  Preview transaction outcomes with gas estimates, risk assessment, and decoded function calls.
                 </p>
               </div>
 
@@ -316,12 +338,18 @@ export default function FeaturesPage() {
                     <td className="border-2 border-border p-4 text-center">❌ No</td>
                   </tr>
                   <tr>
+                    <td className="border-2 border-border p-4 font-semibold">Transaction Simulator</td>
+                    <td className="border-2 border-border p-4 text-center">✅ Built-in</td>
+                    <td className="border-2 border-border p-4 text-center">❌ No</td>
+                    <td className="border-2 border-border p-4 text-center">❌ No</td>
+                  </tr>
+                  <tr className="bg-accent/20">
                     <td className="border-2 border-border p-4 font-semibold">Browser Extension</td>
                     <td className="border-2 border-border p-4 text-center">❌ No (Web)</td>
                     <td className="border-2 border-border p-4 text-center">✅ Yes</td>
                     <td className="border-2 border-border p-4 text-center">❌ No</td>
                   </tr>
-                  <tr className="bg-accent/20">
+                  <tr>
                     <td className="border-2 border-border p-4 font-semibold">Production Ready</td>
                     <td className="border-2 border-border p-4 text-center">❌ Testing Only</td>
                     <td className="border-2 border-border p-4 text-center">✅ Yes</td>

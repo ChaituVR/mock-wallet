@@ -17,9 +17,11 @@ import {
   type WCRequest,
   parseWCUri,
 } from "@/lib/walletconnect/wc-manager"
-import { Link2, Unlink, AlertCircle, CheckCircle2, Loader2, ExternalLink, Scan, Settings, Eye, Bot, Camera, X } from "lucide-react"
+import { Link2, Unlink, AlertCircle, CheckCircle2, Loader2, ExternalLink, Scan, Settings, Eye, Bot, Camera, X, PlayCircle } from "lucide-react"
 import { SUPPORTED_CHAINS } from "@/lib/wallet/chain-config"
 import dynamic from "next/dynamic"
+import { TransactionSimulator, type TransactionData } from "./transaction-simulator"
+import { DataVerifier } from "./data-verifier"
 
 // Dynamically import QR scanner to avoid SSR issues
 const QrScanner = dynamic(() => import("react-qr-scanner"), { ssr: false })
@@ -52,6 +54,8 @@ export function WalletConnectConnector() {
   const [showQrScanner, setShowQrScanner] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [initStatus, setInitStatus] = useState<"idle" | "initializing" | "ready" | "error">("idle")
+  const [showTransactionSimulator, setShowTransactionSimulator] = useState(false)
+  const [simulatorTransaction, setSimulatorTransaction] = useState<TransactionData | null>(null)
   const [requestLogs, setRequestLogs] = useState<Array<{
     id: string
     timestamp: Date
@@ -880,6 +884,22 @@ export function WalletConnectConnector() {
                 <pre className="whitespace-pre-wrap break-all">{formatRequestParams(pendingRequest)}</pre>
               </div>
 
+              {/* Data Verifier for detailed inspection */}
+              {pendingRequest && (
+                <DataVerifier
+                  data={pendingRequest.method === "eth_sendTransaction" 
+                    ? pendingRequest.params[0]
+                    : pendingRequest.method === "eth_signTypedData_v4" || pendingRequest.method === "eth_signTypedData"
+                    ? JSON.parse(pendingRequest.params[1])
+                    : { 
+                        method: pendingRequest.method,
+                        params: pendingRequest.params 
+                      }
+                  }
+                  title={`${pendingRequest.method} - Detailed View`}
+                />
+              )}
+
               {pendingRequest.verifyContext?.verified.isScam && (
                 <Alert className="border-[3px] border-foreground bg-[#ff3333]/30">
                   <AlertCircle className="h-4 w-4" />
@@ -905,6 +925,29 @@ export function WalletConnectConnector() {
                 >
                   {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : "REJECT"}
                 </Button>
+                {pendingRequest?.method === "eth_sendTransaction" && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      if (pendingRequest?.params?.[0]) {
+                        const tx = pendingRequest.params[0]
+                        setSimulatorTransaction({
+                          to: tx.to,
+                          from: tx.from || activeAccount?.address,
+                          value: tx.value || "0",
+                          data: tx.data,
+                          gasLimit: tx.gas || tx.gasLimit,
+                        })
+                        setShowTransactionSimulator(true)
+                      }
+                    }}
+                    disabled={isProcessing || isWatchOnly}
+                    className="flex-1 bg-blue-500/10 border-[3px] border-blue-500 font-mono uppercase hover:bg-blue-500/20 text-blue-500"
+                  >
+                    <PlayCircle className="h-4 w-4 mr-1" />
+                    SIMULATE
+                  </Button>
+                )}
                 <Button
                   onClick={handleRequestApprove}
                   disabled={isProcessing || isWatchOnly}
@@ -993,6 +1036,25 @@ export function WalletConnectConnector() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Transaction Simulator for WalletConnect Requests */}
+      <TransactionSimulator
+        open={showTransactionSimulator}
+        onOpenChange={setShowTransactionSimulator}
+        transaction={simulatorTransaction}
+        chainId={chainId}
+        fromAddress={activeAccount?.address || ""}
+        onProceed={() => {
+          setShowTransactionSimulator(false)
+          setSimulatorTransaction(null)
+          // Continue with the approval flow
+          handleRequestApprove()
+        }}
+        onCancel={() => {
+          setShowTransactionSimulator(false)
+          setSimulatorTransaction(null)
+        }}
+      />
     </>
   )
 }

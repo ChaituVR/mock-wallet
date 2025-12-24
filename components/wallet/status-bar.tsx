@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Globe, Wallet, Coins, Zap } from 'lucide-react'
+import { Globe, Wallet, Coins, Zap, MessageSquarePlus } from 'lucide-react'
 
 export function StatusBar() {
   const { 
@@ -52,7 +52,7 @@ export function StatusBar() {
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 bg-background border-b-[3px] border-foreground">
-      <div className="container mx-auto px-4 h-14 flex items-center justify-between">
+      <div className="container mx-auto px-4 h-14 flex items-center justify-between gap-4">
         {/* Left: Chain Selector */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
@@ -179,6 +179,20 @@ export function StatusBar() {
               Get Test Funds
             </Button>
           )}
+        </div>
+
+        {/* Right: Feature Request */}
+        <div className="hidden sm:flex items-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => window.open('https://tally.so/r/jabg9R', '_blank')}
+            className="h-8 font-mono text-xs hover:bg-primary/10 gap-1.5"
+            title="Request a feature or report an issue"
+          >
+            <MessageSquarePlus className="w-3.5 h-3.5" />
+            <span className="hidden md:inline">Feedback</span>
+          </Button>
         </div>
       </div>
     </div>

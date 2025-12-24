@@ -22,9 +22,10 @@ Mock Wallet is a professional Web3 development wallet designed for blockchain de
 **Key Differentiators**:
 - Multi-account management from a single seed phrase or multiple private keys
 - WalletConnect v2 native integration for dApp testing
-- Watch-only address monitoring without private keys
+- Address impersonation & watch-only mode (impersonate any address without private keys)
 - URL import for CI/CD pipeline integration
 - Agent mode for automated testing workflows
+- Transaction Simulator for previewing outcomes before signing
 - Comprehensive testnet support (Sepolia, Polygon Amoy, Arbitrum Sepolia, etc.)
 
 ---
@@ -45,7 +46,15 @@ Mock Wallet is a professional Web3 development wallet designed for blockchain de
 - Request handling: sign transactions, sign messages, sign typed data (EIP-712)
 - Multi-session support
 
-### 3. Network & Chain Support
+### 3. Watch-Only Mode & Address Impersonation
+- Monitor any Ethereum address without private key access
+- Impersonate whales, other users, or any address for UI testing
+- View dApp UI from any address perspective
+- Zero security risk (no transaction signing capability)
+- Perfect for portfolio tracking and UX testing
+- ENS name resolution support
+
+### 4. Network & Chain Support
 Supported networks:
 - **Ethereum**: Mainnet (1), Sepolia (11155111)
 - **Polygon**: Mainnet (137), Amoy (80002)
@@ -54,7 +63,7 @@ Supported networks:
 - **Base**: Mainnet (8453), Sepolia (84532)
 - **Custom**: Any EVM-compatible chain via RPC URL
 
-### 4. Developer Testing Tools
+### 5. Developer Testing Tools
 - Send test transactions on testnets
 - Sign messages (personal_sign)
 - Sign typed data (EIP-712)
@@ -62,8 +71,18 @@ Supported networks:
 - Real-time balance updates
 - Faucet integration for test tokens
 - URL-based wallet import for CI/CD testing
+- Transaction Simulator for previewing outcomes
 
-### 5. Security & Safety
+### 6. Transaction Simulator
+- Preview transaction outcomes before signing
+- Gas estimation and cost analysis
+- Risk assessment with visual warnings
+- Decode ERC20 transfers and approvals
+- Detect unlimited token approvals
+- Balance change predictions
+- Smart contract function decoding
+
+### 6. Security & Safety
 ⚠️ **IMPORTANT**: Mock Wallet is designed ONLY for testing and development purposes.
 - Never use with real funds or mainnet private keys
 - Private keys stored in browser localStorage (not production-safe)
@@ -167,6 +186,7 @@ Mock Wallet is specifically designed for developers and testing workflows:
 4. **Multi-Account Testing**: Test applications with multiple accounts and user scenarios
 5. **Blockchain Education**: Learn Web3 development without financial risk
 6. **Transaction Debugging**: Inspect and debug transaction flows in a safe environment
+7. **Transaction Simulation**: Preview transaction outcomes with gas estimates and risk assessment
 
 ---
 
@@ -190,7 +210,7 @@ View full schema implementation at: https://mockwallet.dev (view page source)
 web3 wallet, ethereum wallet, developer wallet, mock wallet, blockchain wallet, test wallet, testnet wallet, crypto wallet
 
 ### Secondary Keywords:
-web3 developer tools, dapp testing, smart contract testing, ethereum development tools, web3 testing tool, blockchain developer tools, walletconnect wallet, multi-account wallet, HD wallet
+web3 developer tools, dapp testing, smart contract testing, ethereum development tools, web3 testing tool, blockchain developer tools, walletconnect wallet, multi-account wallet, HD wallet, transaction simulator
 
 ### Long-Tail Keywords:
 - how to test ethereum dapps
@@ -198,6 +218,8 @@ web3 developer tools, dapp testing, smart contract testing, ethereum development
 - ethereum testnet wallet with walletconnect
 - multi-account ethereum wallet for testing
 - blockchain development testing tool
+- transaction simulator ethereum
+- preview transaction before signing
 
 ### Technical Keywords:
 ethers.js, WalletConnect v2, Reown, EIP-712, BIP-39, BIP-44, EVM-compatible, JSON-RPC, testnet faucets
