@@ -94,20 +94,6 @@ export default function FeaturesPage() {
 
             <div className="border-4 border-border bg-card p-6 hover:shadow-lg transition-shadow">
               <h2 className="text-2xl font-black uppercase mb-3 flex items-center gap-2">
-                <span className="text-3xl">🤖</span>
-                Agent Mode
-              </h2>
-              <ul className="space-y-2 text-base">
-                <li>✓ Auto-approve WalletConnect requests</li>
-                <li>✓ Perfect for automated testing</li>
-                <li>✓ Simulate user behavior programmatically</li>
-                <li>✓ One-click toggle on/off</li>
-                <li>✓ Safe for testing environments only</li>
-              </ul>
-            </div>
-
-            <div className="border-4 border-border bg-card p-6 hover:shadow-lg transition-shadow">
-              <h2 className="text-2xl font-black uppercase mb-3 flex items-center gap-2">
                 <span className="text-3xl">🔧</span>
                 URL Import (CI/CD)
               </h2>

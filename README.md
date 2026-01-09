@@ -51,7 +51,6 @@ Mock Wallet is a professional-grade Web3 testing wallet designed specifically fo
 - **Balance Monitoring** - Real-time balance updates
 - **Network Switching** - Seamless chain transitions
 - **Private Key Import** - Import from private keys or mnemonic phrases
-- **Agent Mode** - Automated transaction signing for testing
 
 ### 🎨 User Experience
 - **Brutalist Design** - Bold, functional interface

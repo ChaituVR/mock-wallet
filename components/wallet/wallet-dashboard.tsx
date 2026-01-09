@@ -260,14 +260,14 @@ export function WalletDashboard() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 pt-2">
+              <div className="grid grid-cols-3 gap-4 pt-2">
                 <Button
                   data-action="send"
                   className="h-18 font-black uppercase text-lg border-3 brutalist-shadow bg-gradient-to-br from-primary to-primary/80 text-primary-foreground hover:from-primary hover:to-primary/90 hover:brutalist-shadow-lg transition-all duration-300 hover:scale-[1.02]"
                   size="lg"
                   onClick={() => setShowSendTx(true)}
                 >
-                  <Send className="h-6 w-6 mr-3" />
+                  <Send className="h-6 w-6 mr-2" />
                   Send
                 </Button>
                 <Button
@@ -277,8 +277,23 @@ export function WalletDashboard() {
                   size="lg"
                   onClick={() => setShowReceive(true)}
                 >
-                  <Download className="h-6 w-6 mr-3 rotate-180" />
+                  <Download className="h-6 w-6 mr-2 rotate-180" />
                   Receive
+                </Button>
+                <Button
+                  data-action="walletconnect"
+                  variant="outline"
+                  className="h-18 font-black uppercase text-lg border-3 border-primary brutalist-shadow bg-gradient-to-br from-primary/5 to-primary/10 hover:bg-primary/20 hover:border-primary hover:brutalist-shadow-lg transition-all duration-300 hover:scale-[1.02]"
+                  size="lg"
+                  onClick={() => {
+                    setActiveTab("walletconnect")
+                    setTimeout(() => {
+                      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
+                    }, 100)
+                  }}
+                >
+                  <Link2 className="h-6 w-6 mr-2" />
+                  Connect
                 </Button>
               </div>
               <div className="grid grid-cols-1 gap-4">

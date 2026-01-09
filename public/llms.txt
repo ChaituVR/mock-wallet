@@ -24,7 +24,6 @@ Mock Wallet is a professional Web3 development wallet designed for blockchain de
 - WalletConnect v2 native integration for dApp testing
 - Address impersonation & watch-only mode (impersonate any address without private keys)
 - URL import for CI/CD pipeline integration
-- Agent mode for automated testing workflows
 - Transaction Simulator for previewing outcomes before signing
 - Comprehensive testnet support (Sepolia, Polygon Amoy, Arbitrum Sepolia, etc.)
 
@@ -162,7 +161,8 @@ Mock Wallet is designed for testing purposes only and should never be used with 
 Mock Wallet supports Ethereum (Mainnet & Sepolia), Polygon (Mainnet & Amoy), Arbitrum (One & Sepolia), Optimism (Mainnet & Sepolia), Base (Mainnet & Sepolia), and any custom EVM-compatible chain via RPC URL.
 
 ### How do I connect Mock Wallet to a dApp?
-First, set your Reown Project ID in settings. Then copy the WalletConnect URI from your dApp and paste it into Mock Wallet's connection field. Click PAIR to establish the connection.
+### How do I connect to a dApp via WalletConnect?
+Mock Wallet comes with a default Reown Project ID configured. Simply copy the WalletConnect URI from your dApp and paste it into Mock Wallet's connection field. Click PAIR to establish the connection. You can customize the Project ID in settings if needed.
 
 ### Can I import my existing wallet?
 Yes! You can import wallets using private keys, 12/24-word mnemonic phrases, or add Ethereum addresses as watch-only. You can also import multiple wallets via CSV file for bulk management.
@@ -170,7 +170,6 @@ Yes! You can import wallets using private keys, 12/24-word mnemonic phrases, or 
 ### What makes Mock Wallet different from MetaMask or other wallets?
 Mock Wallet is specifically designed for developers and testing workflows:
 - URL-based import for CI/CD automation
-- Agent mode for automated testing
 - Multi-session WalletConnect support
 - Watch-only addresses without private keys
 - Comprehensive testnet support out-of-the-box

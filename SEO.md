@@ -223,10 +223,9 @@ Sitemap: https://mockwallet.dev/sitemap.xml
 3. **Multi-Everything** - Accounts, chains, sessions
 4. **WalletConnect Native** - Seamless dApp connections
 5. **Open Source** - Transparent and trustworthy (MIT License)
-6. **Agent Mode** - Automate your testing
-7. **URL Import** - CI/CD integration ready
-8. **Address Impersonation** - View dApps as any address (watch-only mode)
-9. **Transaction Simulator** - Preview outcomes before signing
+6. **URL Import** - CI/CD integration ready
+7. **Address Impersonation** - View dApps as any address (watch-only mode)
+8. **Transaction Simulator** - Preview outcomes before signing
 
 ---
 
@@ -383,7 +382,6 @@ Sitemap: https://mockwallet.dev/sitemap.xml
 ✅ Transaction Simulator
 ✅ Address Impersonation (watch-only)
 ✅ WalletConnect v2 native
-✅ Agent mode automation
 ✅ URL import for CI/CD
 
 ### vs. Impersonator Tools

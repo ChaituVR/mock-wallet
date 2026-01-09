@@ -1,15 +1,10 @@
 "use client"
 
-import { Hexagon, Bot } from "lucide-react"
+import { Hexagon } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { AccountSwitcher } from "./account-switcher"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
-import { useWallet } from "@/lib/wallet/wallet-provider"
 
 export function WalletHeader() {
-  const { agentMode, setAgentMode, activeAccount } = useWallet()
-
   return (
     <header className="border-b-4 border-border bg-card z-40 shadow-2xl">
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-5">
@@ -24,20 +19,6 @@ export function WalletHeader() {
             </div>
           </div>
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-            {activeAccount && !activeAccount.isWatchOnly && (
-              <div className="flex items-center gap-1 sm:gap-2">
-                <Bot className={`w-4 h-4 ${agentMode ? 'text-primary' : 'text-muted-foreground'}`} />
-                <Label htmlFor="agent-mode" className="font-mono text-xs font-bold cursor-pointer hidden sm:inline">
-                  Agent
-                </Label>
-                <Switch
-                  id="agent-mode"
-                  checked={agentMode}
-                  onCheckedChange={setAgentMode}
-                  className={agentMode ? 'data-[state=checked]:bg-primary' : ''}
-                />
-              </div>
-            )}
             <ThemeToggle />
             <AccountSwitcher />
           </div>

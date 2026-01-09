@@ -27,7 +27,7 @@ export function ProjectIdSettings() {
     <div className="space-y-3">
       <Label htmlFor="project-id" className="text-base font-semibold flex items-center gap-2">
         <Key className="h-4 w-4" />
-        Reown Project ID (Optional)
+        Reown Project ID
       </Label>
       <div className="flex gap-2">
         <Input
@@ -52,7 +52,7 @@ export function ProjectIdSettings() {
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription className="text-xs">
-          Get your free project ID from{" "}
+          A default project ID is set. You can update it with your own from{" "}
           <a
             href="https://cloud.reown.com"
             target="_blank"
@@ -61,7 +61,7 @@ export function ProjectIdSettings() {
           >
             cloud.reown.com
           </a>
-          . Required for WalletConnect functionality.
+          {" "}for WalletConnect functionality.
         </AlertDescription>
       </Alert>
     </div>

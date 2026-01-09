@@ -99,21 +99,6 @@ const featureContent: Record<string, {
       { step: 4, title: "Test UI States", description: "See how dApps display for different users" },
     ],
   },
-  "agent-mode": {
-    benefits: [
-      "Auto-approve all WalletConnect requests",
-      "Perfect for E2E testing automation",
-      "CI/CD pipeline integration",
-      "Headless testing support",
-      "Configurable approval rules",
-    ],
-    howItWorks: [
-      { step: 1, title: "Enable Agent Mode", description: "Toggle agent mode in settings" },
-      { step: 2, title: "Set Approval Rules", description: "Configure which requests to auto-approve" },
-      { step: 3, title: "Connect to dApp", description: "Connect via WalletConnect as normal" },
-      { step: 4, title: "Auto-Processing", description: "Requests are automatically handled" },
-    ],
-  },
   "url-import": {
     benefits: [
       "Import wallet config via URL parameters",

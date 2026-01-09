@@ -16,7 +16,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 📤 CSV bulk import/export functionality
 - 🌐 Multi-chain support (Ethereum, Polygon, Arbitrum, Optimism, Base)
 - 🔄 Automatic account switching with WalletConnect session updates
-- 🤖 Agent mode for automated transaction signing
 - 📱 Progressive Web App (PWA) support
 - 🎨 Brutalist design with dark mode
 - ⚡ Next.js 15 with App Router

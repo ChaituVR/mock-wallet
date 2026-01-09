@@ -202,13 +202,6 @@ export const featureSeoData: Record<
     description: "Monitor any Ethereum address without private keys. View dApps from any perspective. Perfect for portfolio tracking and UI testing.",
     keywords: ["watch only wallet", "address impersonation", "portfolio tracking", "view only"],
   },
-  "agent-mode": {
-    name: "Agent Mode",
-    slug: "agent-mode",
-    title: "Agent Mode - Automated Transaction Signing",
-    description: "Auto-approve WalletConnect requests for automated testing. Perfect for CI/CD pipelines and E2E testing.",
-    keywords: ["agent mode", "automated testing", "auto approve", "CI/CD wallet"],
-  },
   "url-import": {
     name: "URL Import",
     slug: "url-import",

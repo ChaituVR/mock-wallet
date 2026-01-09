@@ -42,8 +42,8 @@ export default function DocsPage() {
             </p>
             <p className="text-lg leading-relaxed mt-4">
               Unlike production wallets like MetaMask or Rainbow, Mock Wallet is purpose-built for development and 
-              testing workflows, with features like URL-based wallet import for CI/CD pipelines, agent mode for 
-              automated testing, and watch-only addresses for monitoring without private keys.
+              testing workflows, with features like URL-based wallet import for CI/CD pipelines, transaction simulation, 
+              and watch-only addresses for monitoring without private keys.
             </p>
           </section>
 
@@ -82,7 +82,6 @@ export default function DocsPage() {
             <h3 className="text-2xl font-bold uppercase mt-8 mb-3">Developer Tools</h3>
             <ul className="list-disc pl-6 space-y-2 text-lg">
               <li>URL-based wallet import for CI/CD integration</li>
-              <li>Agent mode for automated testing workflows</li>
               <li>Transaction history with block explorer links</li>
               <li>Real-time balance updates</li>
               <li>Integrated faucet links for all supported testnets</li>
@@ -166,9 +165,10 @@ export default function DocsPage() {
 
             <h3 className="text-xl font-bold uppercase mt-6 mb-2">How do I connect to a dApp via WalletConnect?</h3>
             <p className="text-base leading-relaxed">
-              First, configure your Reown Project ID in the settings panel. Then, copy the WalletConnect URI from 
+              Mock Wallet comes with a default Reown Project ID configured. Simply copy the WalletConnect URI from 
               your dApp (usually starts with "wc:"), paste it into Mock Wallet's connection field, and click 
-              "PAIR". The connection will be established and you can approve requests from your dApp.
+              "PAIR". The connection will be established and you can approve requests from your dApp. You can also 
+              configure your own Project ID in the settings if needed.
             </p>
 
             <h3 className="text-xl font-bold uppercase mt-6 mb-2">Can I import my existing wallet?</h3>
@@ -183,13 +183,6 @@ export default function DocsPage() {
               Add URL parameters to auto-import wallets: <code className="bg-muted px-2 py-1 rounded">
               ?pk=YOUR_PRIVATE_KEY&chainId=11155111</code>. This is perfect for automated testing pipelines 
               where you need to initialize wallets programmatically.
-            </p>
-
-            <h3 className="text-xl font-bold uppercase mt-6 mb-2">What is Agent Mode?</h3>
-            <p className="text-base leading-relaxed">
-              Agent Mode automatically approves WalletConnect requests without user interaction. This is useful 
-              for automated testing scenarios where you want to simulate user approvals programmatically. Enable 
-              it from the settings panel.
             </p>
 
             <h3 className="text-xl font-bold uppercase mt-6 mb-2">Where are my private keys stored?</h3>

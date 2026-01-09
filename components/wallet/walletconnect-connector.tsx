@@ -39,7 +39,7 @@ function formatTimeAgo(timestamp: number): string {
 }
 
 export function WalletConnectConnector() {
-  const { activeAccount, chainId, projectId, agentMode } = useWallet()
+  const { activeAccount, chainId, projectId } = useWallet()
   const [wcUri, setWcUri] = useState("")
   const [isConnecting, setIsConnecting] = useState(false)
   const [isInitializing, setIsInitializing] = useState(false)
@@ -65,15 +65,11 @@ export function WalletConnectConnector() {
     result?: any
   }>>([])
   const initRef = useRef(false)
-  const agentModeRef = useRef(agentMode)
   const activeAccountRef = useRef(activeAccount)
   const chainIdRef = useRef(chainId)
+  const connectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Keep refs in sync with state
-  useEffect(() => {
-    agentModeRef.current = agentMode
-  }, [agentMode])
-
   useEffect(() => {
     activeAccountRef.current = activeAccount
   }, [activeAccount])
@@ -81,6 +77,15 @@ export function WalletConnectConnector() {
   useEffect(() => {
     chainIdRef.current = chainId
   }, [chainId])
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (connectTimeoutRef.current) {
+        clearTimeout(connectTimeoutRef.current)
+      }
+    }
+  }, [])
 
   // Update WalletConnect sessions when account or chain changes
   useEffect(() => {
@@ -103,17 +108,6 @@ export function WalletConnectConnector() {
 
     updateSessions()
   }, [activeAccount?.address, chainId, initStatus])
-
-  // Auto-connect when WC URI is pasted in agent mode
-  useEffect(() => {
-    if (agentMode && wcUri.trim() && activeAccount && initStatus === "ready" && !isConnecting) {
-      const parsed = parseWCUri(wcUri)
-      if (parsed) {
-        console.log("[v0] Agent mode: auto-connecting with pasted URI...")
-        handleConnect()
-      }
-    }
-  }, [wcUri, agentMode])
 
   const refreshSessions = useCallback(() => {
     const activeSessions = wcManager.getActiveSessions()
@@ -174,22 +168,6 @@ export function WalletConnectConnector() {
 
   const handleSessionProposal = async (proposal: WCProposal) => {
     console.log("[v0] Received session proposal in UI:", proposal)
-    const currentAccount = activeAccountRef.current
-    const currentChainId = chainIdRef.current
-    
-    // Auto-approve in agent mode
-    if (agentModeRef.current && currentAccount && !currentAccount.isWatchOnly) {
-      console.log("[v0] Agent mode enabled, auto-approving session...")
-      try {
-        await wcManager.approveSession(proposal, currentAccount.address, currentChainId)
-        refreshSessions()
-        console.log("[v0] Session auto-approved in agent mode")
-        return
-      } catch (err) {
-        console.error("[v0] Auto-approve error:", err)
-        // Fall back to manual approval on error
-      }
-    }
     
     setPendingProposal(proposal)
     setShowSessionDialog(true)
@@ -197,8 +175,6 @@ export function WalletConnectConnector() {
 
   const handleSessionRequest = async (request: WCRequest) => {
     console.log("[v0] Received session request in UI:", request)
-    const currentAccount = activeAccountRef.current
-    const currentChainId = chainIdRef.current
     
     // Add to request log
     setRequestLogs(prev => [{
@@ -209,80 +185,25 @@ export function WalletConnectConnector() {
       params: request.params,
     }, ...prev].slice(0, 50)) // Keep last 50 requests
     
-    // Auto-approve in agent mode
-    if (agentModeRef.current && currentAccount && !currentAccount.isWatchOnly && currentAccount.privateKey) {
-      console.log("[v0] Agent mode enabled, auto-processing request...")
-      try {
-        const currentChain = SUPPORTED_CHAINS.find((c) => c.chainId === currentChainId)
-        const rpcUrl = currentChain?.rpcUrls.default.http[0] || "https://1rpc.io/sepolia"
-        let result: string
-
-        switch (request.method) {
-          case "personal_sign": {
-            const message = request.params[0]
-            const messageStr = message.startsWith("0x") ? Buffer.from(message.slice(2), "hex").toString("utf8") : message
-            result = await wcManager.signMessage(messageStr, currentAccount.privateKey)
-            break
-          }
-          case "eth_sign": {
-            const message = request.params[1]
-            result = await wcManager.signMessage(message, currentAccount.privateKey)
-            break
-          }
-          case "eth_signTypedData":
-          case "eth_signTypedData_v3":
-          case "eth_signTypedData_v4": {
-            const typedData = JSON.parse(request.params[1])
-            const { domain, types, message: value } = typedData
-            const { EIP712Domain, ...restTypes } = types
-            result = await wcManager.signTypedData(domain, restTypes, value, currentAccount.privateKey)
-            break
-          }
-          case "eth_sendTransaction": {
-            const tx = request.params[0]
-            result = await wcManager.sendTransaction(tx, currentAccount.privateKey, rpcUrl)
-            break
-          }
-          default:
-            console.log("[v0] Unsupported method for auto-sign:", request.method)
-            // Fall back to manual for unsupported methods
-            setPendingRequest(request)
-            setShowRequestDialog(true)
-            return
-        }
-
-        await wcManager.respondToRequest(request.id, { result })
-        console.log("[v0] Request auto-processed in agent mode")
-        
-        // Update log status
-        setRequestLogs(prev => prev.map(log => 
-          log.id === `${request.id}` ? { ...log, status: "approved" as const, result } : log
-        ))
-        return
-      } catch (err) {
-        console.error("[v0] Auto-process error:", err)
-        // Fall back to manual approval on error
-      }
-    }
-    
     setPendingRequest(request)
     setShowRequestDialog(true)
   }
 
-  const handleConnect = async () => {
-    if (!wcUri.trim() || !activeAccount) return
+  const handleConnect = async (uriToConnect?: string) => {
+    const uri = uriToConnect || wcUri
+    if (!uri.trim() || !activeAccount) return
 
     setIsConnecting(true)
     setError("")
 
     try {
-      const parsed = parseWCUri(wcUri)
+      const parsed = parseWCUri(uri)
       if (!parsed) {
         throw new Error("Invalid WalletConnect URI. Must start with 'wc:'")
       }
 
       console.log("[v0] Attempting to pair with URI...")
-      await wcManager.pair(wcUri)
+      await wcManager.pair(uri)
       setWcUri("")
       setShowQrScanner(false)
       console.log("[v0] Pair called successfully, waiting for proposal...")
@@ -303,7 +224,7 @@ export function WalletConnectConnector() {
         // Auto-connect after scanning
         setTimeout(() => {
           if (uri && activeAccount) {
-            setWcUri(uri)
+            handleConnect(uri)
           }
         }, 100)
       }
@@ -527,14 +448,51 @@ export function WalletConnectConnector() {
                   PASTE WC URI
                 </Label>
                 <div className="flex gap-2">
-                  <Input
-                    id="wc-uri"
-                    placeholder="wc:..."
-                    value={wcUri}
-                    onChange={(e) => setWcUri(e.target.value)}
-                    className="font-mono text-sm border-[3px] border-foreground"
-                    disabled={isConnecting || initStatus !== "ready"}
-                  />
+                  <div className="flex-1 space-y-2">
+                    <Input
+                      id="wc-uri"
+                      placeholder="wc:..."
+                      value={wcUri}
+                      onChange={(e) => {
+                        const value = e.target.value
+                        setWcUri(value)
+                        setError("")
+                        
+                        // Clear previous timeout
+                        if (connectTimeoutRef.current) {
+                          clearTimeout(connectTimeoutRef.current)
+                        }
+                        
+                        // Auto-connect on paste/input with debounce
+                        if (value.trim().startsWith('wc:') && activeAccount && initStatus === "ready") {
+                          connectTimeoutRef.current = setTimeout(() => {
+                            handleConnect(value)
+                          }, 500)
+                        }
+                      }}
+                      onPaste={(e) => {
+                        const pastedText = e.clipboardData.getData('text')
+                        if (pastedText.trim().startsWith('wc:') && activeAccount && initStatus === "ready") {
+                          // Clear previous timeout
+                          if (connectTimeoutRef.current) {
+                            clearTimeout(connectTimeoutRef.current)
+                          }
+                          // Connect immediately on paste
+                          setTimeout(() => {
+                            handleConnect(pastedText)
+                          }, 300)
+                        }
+                      }}
+                      className="font-mono text-sm border-[3px] border-foreground"
+                      disabled={isConnecting || initStatus !== "ready"}
+                    />
+                    {error && (
+                      <p className="font-mono text-xs text-[#ff3333] flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        {error}
+                      </p>
+                    )}
+                  </div>
                   <Button
                     onClick={() => setShowQrScanner(true)}
                     disabled={isConnecting || initStatus !== "ready"}
@@ -543,25 +501,11 @@ export function WalletConnectConnector() {
                   >
                     <Camera className="h-4 w-4" />
                   </Button>
-                  <Button
-                    onClick={handleConnect}
-                    disabled={!wcUri.trim() || isConnecting || initStatus !== "ready"}
-                    className="px-6 bg-foreground text-background border-[3px] border-foreground font-mono uppercase hover:bg-background hover:text-foreground"
-                  >
-                    {isConnecting ? <Loader2 className="h-4 w-4 animate-spin" /> : "PAIR"}
-                  </Button>
                 </div>
                 {initStatus === "initializing" && (
                   <p className="font-mono text-xs text-[#ffff00]">Connecting to relay server...</p>
                 )}
               </div>
-
-              {error && (
-                <Alert className="border-[3px] border-foreground bg-[#ff3333]/20">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription className="font-mono text-xs">{error}</AlertDescription>
-                </Alert>
-              )}
 
               {sessionCount > 0 && (
                 <div className="space-y-3 pt-4 border-t-[3px] border-foreground">

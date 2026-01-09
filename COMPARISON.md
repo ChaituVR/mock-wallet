@@ -63,7 +63,6 @@ Import: 0x742d35Cc6634C0532925a3b844Bc454e4438f44e
 | **WalletConnect v2** | ✅ Native | ❌ Usually | ✅ |
 | **Transaction Simulator** | ✅ Built-in | ❌ | ❌ |
 | **Multi-Chain Support** | ✅ 10+ chains | Limited | ✅ |
-| **Agent Mode (Auto-approve)** | ✅ | ❌ | ❌ |
 | **URL Import (CI/CD)** | ✅ | ❌ | ❌ |
 | **CSV Bulk Import** | ✅ | ❌ | ❌ |
 | **Transaction History** | ✅ | Limited | ✅ |
@@ -97,7 +96,6 @@ Import: 0x742d35Cc6634C0532925a3b844Bc454e4438f44e
 
 4. **Development Workflow**
    - CI/CD integration via URL import
-   - Agent mode for automation
    - Multi-account testing
    - Cross-chain testing
 
@@ -114,8 +112,7 @@ Import: 0x742d35Cc6634C0532925a3b844Bc454e4438f44e
 ### Q: Can I automate testing?
 **A: Yes!** 
 - URL Import: `https://mockwallet.dev/?pk=0x...&chainId=11155111`
-- Agent Mode: Auto-approve WalletConnect requests
-- Perfect for CI/CD pipelines
+- Perfect for CI/CD pipelines with automated wallet setup
 
 ### Q: Do I need multiple tools?
 **A: No!** MockWallet.dev is a comprehensive solution that handles:

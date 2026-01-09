@@ -23,10 +23,8 @@ interface WalletContextType {
   chainId: number
   isConnected: boolean
   projectId: string
-  agentMode: boolean
   tokens: TokenBalance[]
   customTokens: Token[]
-  setAgentMode: (enabled: boolean) => void
   createNewWallet: () => void
   importWallet: (privateKeyOrMnemonicOrAddress: string) => Promise<void>
   addWallet: (privateKeyOrMnemonicOrAddress: string) => Promise<void>
@@ -54,9 +52,8 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
   const [balance, setBalance] = useState("0.0")
   const [balanceLoading, setBalanceLoading] = useState(false)
   const [chainId, setChainId] = useState(11155111)
-  const [projectId, setProjectIdState] = useState("")
+  const [projectId, setProjectIdState] = useState("ecdb8547173512b10c54cb38cf0bd9e0")
   const [hasCheckedUrl, setHasCheckedUrl] = useState(false)
-  const [agentMode, setAgentModeState] = useState(false)
   const [tokens, setTokens] = useState<TokenBalance[]>([])
   const [customTokens, setCustomTokens] = useState<Token[]>([])
 
@@ -103,8 +100,6 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
         WalletManager.setActiveAccountIndex(0)
         setAccounts(newAccounts)
         setActiveAccountIndex(0)
-        // Enable agent mode when importing from URL with private key
-        setAgentModeState(true)
         // Clean URL after import for security
         if (typeof window !== "undefined") {
           window.history.replaceState({}, "", window.location.pathname)
@@ -130,6 +125,11 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
     const savedProjectId = localStorage.getItem("reown_project_id")
     if (savedProjectId && !urlProjectId) {
       setProjectIdState(savedProjectId)
+    } else if (!savedProjectId && !urlProjectId) {
+      // Use default project ID if none saved
+      const defaultProjectId = "ecdb8547173512b10c54cb38cf0bd9e0"
+      setProjectIdState(defaultProjectId)
+      localStorage.setItem("reown_project_id", defaultProjectId)
     }
   }, [searchParams, hasCheckedUrl])
 
@@ -413,10 +413,6 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
     localStorage.setItem("reown_project_id", id)
   }
 
-  const setAgentMode = (enabled: boolean) => {
-    setAgentModeState(enabled)
-  }
-
   const refreshTokenBalances = async () => {
     if (!activeAccount) {
       setTokens([])
@@ -548,10 +544,8 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
         chainId,
         isConnected: !!activeAccount,
         projectId,
-        agentMode,
         tokens,
         customTokens,
-        setAgentMode,
         createNewWallet,
         importWallet,
         addWallet,
