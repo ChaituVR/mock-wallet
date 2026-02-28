@@ -32,10 +32,15 @@ Mock Wallet is a professional-grade Web3 testing wallet designed specifically fo
 
 ### 🔗 WalletConnect v2 Integration
 - **Universal dApp Connection** - Connect to any WalletConnect-enabled dApp
-- **Real-time Session Management** - Monitor active connections
-- **Auto-approve Mode** - Automate testing workflows
+- **Real-time Session Management** - Monitor active connections with session duration tracking
+- **Agent Mode (Auto-Approve)** - Automatically approve all sessions and requests for CI/CD and E2E testing
+- **WC URI Auto-Connect** - Pass `?wc=URI` to auto-pair with a dApp via URL parameter
 - **Multi-session Support** - Connect to multiple dApps simultaneously
 - **Request Signing** - Sign transactions, messages, and typed data
+- **Export Request Logs** - Download WalletConnect request history as JSON for debugging
+- **Disconnect All Sessions** - Bulk disconnect all active sessions with one click
+- **Toast Notifications** - Real-time visual feedback for Agent Mode auto-approvals
+- **Command Palette Integration** - Toggle Agent Mode via Cmd/Ctrl+K
 
 ### 🌐 Multi-Chain Support
 - **Ethereum** (Mainnet & Sepolia Testnet)

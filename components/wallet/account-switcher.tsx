@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useWallet } from "@/lib/wallet/wallet-provider"
 import { WalletManager } from "@/lib/wallet/wallet-manager"
-import { Check, Plus, Eye, Wallet, Download, AlertCircle, Users, Upload, GripVertical, Sparkles, Edit2 } from "lucide-react"
+import { Check, Plus, Eye, Wallet, Download, AlertCircle, Users, Upload, GripVertical, Sparkles, Edit2, Trash2 } from "lucide-react"
 import {
   DndContext,
   closestCenter,
@@ -48,9 +48,10 @@ interface SortableAccountItemProps {
   balance: string
   onSwitch: (index: number) => void
   onEdit: (index: number) => void
+  onRemove: (index: number) => void
 }
 
-function SortableAccountItem({ account, index, activeAccountIndex, balance, onSwitch, onEdit }: SortableAccountItemProps) {
+function SortableAccountItem({ account, index, activeAccountIndex, balance, onSwitch, onEdit, onRemove }: SortableAccountItemProps) {
   const {
     attributes,
     listeners,
@@ -119,6 +120,17 @@ function SortableAccountItem({ account, index, activeAccountIndex, balance, onSw
         >
           <Edit2 className="h-3.5 w-3.5" />
         </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+          onClick={(e) => {
+            e.stopPropagation()
+            onRemove(index)
+          }}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
         {index === activeAccountIndex && <Check className="w-4 h-4 shrink-0 text-primary" />}
       </div>
     </div>
@@ -126,7 +138,7 @@ function SortableAccountItem({ account, index, activeAccountIndex, balance, onSw
 }
 
 export function AccountSwitcher() {
-  const { accounts, activeAccountIndex, switchAccount, reorderAccounts, updateAccountLabel, addAccountFromSeed, addWallet, getAccountBalance } =
+  const { accounts, activeAccountIndex, switchAccount, reorderAccounts, updateAccountLabel, removeAccount, addAccountFromSeed, addWallet, getAccountBalance } =
     useWallet()
   const { toast } = useToast()
   const [balances, setBalances] = useState<Record<string, string>>({})
@@ -145,6 +157,17 @@ export function AccountSwitcher() {
     toast({
       title: "✓ Account Switched",
       description: `Switched to ${account.label || account.ensName || `Account ${index + 1}`}`,
+      variant: "success",
+    })
+  }
+
+  const handleRemoveAccount = (index: number) => {
+    const account = accounts[index]
+    removeAccount(index)
+    
+    toast({
+      title: "✓ Account Removed",
+      description: `Removed ${account.label || account.ensName || `Account ${index + 1}`}`,
       variant: "success",
     })
   }
@@ -468,6 +491,7 @@ export function AccountSwitcher() {
                 balance={balances[account.address]}
                 onSwitch={handleAccountSwitch}
                 onEdit={setEditingAccountIndex}
+                onRemove={handleRemoveAccount}
               />
             ))}
           </SortableContext>

@@ -12,11 +12,19 @@ export const siteConfig = {
 // Base keywords used across the site
 export const baseKeywords = [
   "web3 wallet",
-  "ethereum wallet", 
+  "ethereum wallet",
   "test wallet",
   "developer wallet",
   "walletconnect",
   "dapp testing",
+  "mock wallet",
+  "web3 testing tool",
+  "blockchain developer tools",
+  "testnet wallet",
+  "smart contract testing",
+  "walletconnect v2",
+  "ethereum developer",
+  "crypto testing",
 ]
 
 // Generate metadata for any page
@@ -209,6 +217,13 @@ export const featureSeoData: Record<
     description: "Auto-import wallets via URL parameters. Zero manual setup for automated testing pipelines.",
     keywords: ["url import", "CI/CD integration", "automated wallet setup", "programmatic import"],
   },
+  "agent-mode": {
+    name: "Agent Mode",
+    slug: "agent-mode",
+    title: "Agent Mode - Auto-Approve All WalletConnect Requests",
+    description: "Automatically approve session proposals and signing requests. Essential for CI/CD pipelines, E2E testing with Cypress or Playwright, and automated workflows.",
+    keywords: ["agent mode", "auto approve", "automated testing", "CI/CD wallet", "e2e testing wallet", "headless wallet"],
+  },
 }
 
 // Use case specific SEO data
@@ -273,8 +288,15 @@ export function generateWebPageSchema(title: string, description: string, url: s
     name: title,
     description,
     url,
+    dateModified: new Date().toISOString().split("T")[0],
+    inLanguage: "en-US",
     isPartOf: {
       "@type": "WebSite",
+      name: siteConfig.name,
+      url: siteConfig.url,
+    },
+    publisher: {
+      "@type": "Organization",
       name: siteConfig.name,
       url: siteConfig.url,
     },

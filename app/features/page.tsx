@@ -1,14 +1,21 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { generateMetadata as genMeta } from "@/lib/seo"
 
-export const metadata: Metadata = {
+export const metadata: Metadata = genMeta({
   title: "Features - Mock Wallet",
   description: "Explore all features of Mock Wallet - Transaction Simulator, Multi-account management, WalletConnect v2 integration, address impersonation & watch-only mode, agent mode, URL import for CI/CD, and comprehensive testnet support for Web3 developers.",
-  openGraph: {
-    title: "Mock Wallet Features - Complete Feature List",
-    description: "Explore all features of Mock Wallet - Transaction Simulator, Multi-account management, WalletConnect v2 integration, address impersonation & watch-only mode, agent mode, URL import for CI/CD, and comprehensive testnet support for Web3 developers.",
-  },
-}
+  keywords: [
+    "wallet features",
+    "transaction simulator",
+    "multi-account wallet",
+    "walletconnect integration",
+    "watch-only wallet",
+    "address impersonation",
+    "ci/cd wallet import",
+  ],
+  path: "/features",
+})
 
 export default function FeaturesPage() {
   return (
@@ -103,6 +110,21 @@ export default function FeaturesPage() {
                 <li>✓ Programmatic wallet initialization</li>
                 <li>✓ Support for private key and chain ID</li>
                 <li>✓ Zero manual setup required</li>
+              </ul>
+            </div>
+
+            <div className="border-4 border-border bg-card p-6 hover:shadow-lg transition-shadow">
+              <h2 className="text-2xl font-black uppercase mb-3 flex items-center gap-2">
+                <span className="text-3xl">🤖</span>
+                Agent Mode (Auto-Approve)
+              </h2>
+              <ul className="space-y-2 text-base">
+                <li>✓ Auto-approve all WalletConnect sessions</li>
+                <li>✓ Auto-sign messages &amp; transactions</li>
+                <li>✓ Toggle via UI, command palette, or <code className="bg-muted px-1 rounded text-sm">?agent=true</code></li>
+                <li>✓ Auto-connect dApps via <code className="bg-muted px-1 rounded text-sm">?wc=URI</code></li>
+                <li>✓ Export request logs as JSON</li>
+                <li>✓ Toast notifications &amp; copy results</li>
               </ul>
             </div>
 
@@ -242,8 +264,9 @@ export default function FeaturesPage() {
               <div className="border-l-4 border-primary bg-primary/5 p-6">
                 <h3 className="text-xl font-bold uppercase mb-2">CI/CD Integration</h3>
                 <p className="text-base leading-relaxed">
-                  Automate wallet imports via URL parameters for testing pipelines. Perfect for end-to-end tests, 
-                  integration tests, and automated QA workflows.
+                  Automate wallet imports via URL parameters and enable Agent Mode for fully automated testing. 
+                  Use <code className="bg-muted px-1 rounded text-sm">?pk=KEY&agent=true&wc=URI</code> for zero-touch E2E testing 
+                  with auto-connect, auto-approve, and exportable request logs.
                 </p>
               </div>
 
@@ -406,7 +429,7 @@ export default function FeaturesPage() {
           <footer className="mt-16 pt-8 border-t-4 border-border">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <p className="text-sm text-muted-foreground">
-                Last updated: December 23, 2025
+                Last updated: February 28, 2026
               </p>
               <div className="flex gap-4">
                 <Link href="/" className="text-primary hover:underline font-semibold">Home</Link>

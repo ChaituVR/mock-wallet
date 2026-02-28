@@ -145,13 +145,6 @@ export default function RootLayout({
       "price": "0",
       "priceCurrency": "USD",
     },
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": "4.9",
-      "ratingCount": "1250",
-      "bestRating": "5",
-      "worstRating": "1",
-    },
     "featureList": [
       "Multi-account management",
       "WalletConnect v2 integration",
@@ -165,8 +158,9 @@ export default function RootLayout({
       "Real-time balance updates",
     ],
     "screenshot": `${siteUrl}/screenshot.png`,
-    "softwareVersion": "1.0",
+    "softwareVersion": "1.1",
     "datePublished": "2025-12-17",
+    "dateModified": "2026-02-28",
     "author": {
       "@type": "Organization",
       "name": "Mock Wallet Team",
@@ -185,7 +179,7 @@ export default function RootLayout({
     "downloadUrl": siteUrl,
     "softwareHelp": {
       "@type": "CreativeWork",
-      "url": `${siteUrl}#docs`,
+      "url": `${siteUrl}/docs`,
     },
   }
 
@@ -197,14 +191,6 @@ export default function RootLayout({
     "alternateName": "Mock Wallet - Web3 Developer Testing Tool",
     "url": siteUrl,
     "description": "Professional Web3 development wallet for blockchain developers",
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": {
-        "@type": "EntryPoint",
-        "urlTemplate": `${siteUrl}/?q={search_term_string}`,
-      },
-      "query-input": "required name=search_term_string",
-    },
   }
 
   // Organization Schema
@@ -268,6 +254,14 @@ export default function RootLayout({
         "acceptedAnswer": {
           "@type": "Answer",
           "text": "Yes! You can import wallets using private keys, 12/24-word mnemonic phrases, or add Ethereum addresses as watch-only. You can also import multiple wallets via CSV file for bulk management.",
+        },
+      },
+      {
+        "@type": "Question",
+        "name": "What is Agent Mode in Mock Wallet?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Agent Mode automatically approves all WalletConnect session proposals and signing requests without manual interaction. Enable it via the toggle switch, the command palette (Cmd/Ctrl+K), or by adding ?agent=true to the URL. Combined with ?wc=URI for auto-connect, it enables fully automated E2E testing pipelines with real-time toast notifications and exportable JSON request logs.",
         },
       },
     ],
@@ -354,73 +348,9 @@ export default function RootLayout({
     ]
   }
 
-  // Product Schema with Reviews
-  const productSchema = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    "name": "Mock Wallet",
-    "description": "Professional Web3 development wallet with multi-account management and WalletConnect integration",
-    "brand": {
-      "@type": "Brand",
-      "name": "Mock Wallet"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD",
-      "availability": "https://schema.org/InStock",
-      "url": siteUrl
-    },
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": "4.9",
-      "reviewCount": "150",
-      "bestRating": "5",
-      "worstRating": "1"
-    },
-    "review": [
-      {
-        "@type": "Review",
-        "author": {
-          "@type": "Person",
-          "name": "Web3 Developer"
-        },
-        "datePublished": "2025-12-15",
-        "reviewBody": "Perfect tool for testing dApps! The multi-account feature and WalletConnect integration make it incredibly easy to test different user scenarios.",
-        "reviewRating": {
-          "@type": "Rating",
-          "ratingValue": "5",
-          "bestRating": "5"
-        }
-      },
-      {
-        "@type": "Review",
-        "author": {
-          "@type": "Person",
-          "name": "Smart Contract Developer"
-        },
-        "datePublished": "2025-12-10",
-        "reviewBody": "Essential tool for blockchain development. The URL import feature is perfect for CI/CD integration. Makes testing so much faster.",
-        "reviewRating": {
-          "@type": "Rating",
-          "ratingValue": "5",
-          "bestRating": "5"
-        }
-      }
-    ]
-  }
+  // Product schema removed - fake reviews violate Google structured data guidelines
 
-  // VideoObject Schema (Preparation for future tutorials)
-  const videoSchema = {
-    "@context": "https://schema.org",
-    "@type": "VideoObject",
-    "name": "Mock Wallet Tutorial - Getting Started with Web3 Testing",
-    "description": "Learn how to use Mock Wallet for testing Web3 applications and dApps",
-    "thumbnailUrl": `${siteUrl}/og-image.png`,
-    "uploadDate": "2025-12-17T00:00:00Z",
-    "contentUrl": `${siteUrl}#video`,
-    "embedUrl": `${siteUrl}#video`
-  }
+  // Video schema removed - no actual video content exists
 
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
@@ -449,10 +379,6 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
         />
         
         {/* Resource Hints */}

@@ -1,14 +1,20 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { generateMetadata as genMeta } from "@/lib/seo"
 
-export const metadata: Metadata = {
-  title: "Documentation - Mock Wallet",
+export const metadata: Metadata = genMeta({
+  title: "Documentation - Mock Wallet Developer Guide",
   description: "Complete documentation for Mock Wallet - Learn how to create test wallets, connect to dApps via WalletConnect, manage multiple accounts, and test Web3 applications safely on testnets.",
-  openGraph: {
-    title: "Mock Wallet Documentation - Complete Developer Guide",
-    description: "Complete documentation for Mock Wallet - Learn how to create test wallets, connect to dApps via WalletConnect, manage multiple accounts, and test Web3 applications safely on testnets.",
-  },
-}
+  keywords: [
+    "mock wallet documentation",
+    "web3 wallet guide",
+    "walletconnect tutorial",
+    "dapp testing guide",
+    "ethereum wallet setup",
+    "testnet wallet docs",
+  ],
+  path: "/docs",
+})
 
 export default function DocsPage() {
   return (
@@ -61,6 +67,14 @@ export default function DocsPage() {
 
             <h3 className="text-2xl font-bold uppercase mt-8 mb-3">WalletConnect v2 Integration</h3>
             <ul className="list-disc pl-6 space-y-2 text-lg">
+              <li>Connect to any dApp using WalletConnect v2</li>
+              <li>Scan QR codes or paste connection URIs</li>
+              <li>Multi-session support for testing multiple dApps simultaneously</li>
+              <li>Agent Mode (Auto-Approve) for automated testing workflows</li>
+              <li>WC URI auto-connect via <code className="bg-muted px-1 rounded text-sm">?wc=URI</code> URL parameter</li>
+              <li>Export request logs as JSON for debugging</li>
+              <li>Disconnect all sessions with one click</li>
+              <li>Session duration tracking and request counters</li>
               <li>Native WalletConnect v2 support via @reown/walletkit</li>
               <li>Connect to dApps using URI or QR code</li>
               <li>Multi-session management (connect to multiple dApps simultaneously)</li>
@@ -82,6 +96,7 @@ export default function DocsPage() {
             <h3 className="text-2xl font-bold uppercase mt-8 mb-3">Developer Tools</h3>
             <ul className="list-disc pl-6 space-y-2 text-lg">
               <li>URL-based wallet import for CI/CD integration</li>
+              <li>Agent Mode for automated request approval (<code className="bg-muted px-1 rounded text-sm">?agent=true</code>)</li>
               <li>Transaction history with block explorer links</li>
               <li>Real-time balance updates</li>
               <li>Integrated faucet links for all supported testnets</li>
@@ -183,6 +198,18 @@ export default function DocsPage() {
               Add URL parameters to auto-import wallets: <code className="bg-muted px-2 py-1 rounded">
               ?pk=YOUR_PRIVATE_KEY&chainId=11155111</code>. This is perfect for automated testing pipelines 
               where you need to initialize wallets programmatically.
+            </p>
+
+            <h3 className="text-xl font-bold uppercase mt-6 mb-2">What is Agent Mode?</h3>
+            <p className="text-base leading-relaxed">
+              Agent Mode automatically approves all WalletConnect session proposals and signing requests without 
+              manual interaction. Enable it via the toggle switch in the WalletConnect panel, the command palette 
+              (<code className="bg-muted px-2 py-1 rounded">Cmd/Ctrl+K</code> → &quot;Agent Mode&quot;), or pass{' '}
+              <code className="bg-muted px-2 py-1 rounded">?agent=true</code> as a URL parameter. Combine with{' '}
+              <code className="bg-muted px-2 py-1 rounded">?wc=URI</code> for fully automated dApp connections. 
+              All auto-approved actions show real-time toast notifications, and request logs can be exported as JSON 
+              for debugging. Essential for CI/CD pipelines, E2E testing with Cypress or Playwright, and any 
+              automated workflow that requires a headless wallet.
             </p>
 
             <h3 className="text-xl font-bold uppercase mt-6 mb-2">Where are my private keys stored?</h3>
@@ -330,7 +357,7 @@ export default function DocsPage() {
 
           <footer className="mt-16 pt-8 border-t-4 border-border">
             <p className="text-sm text-muted-foreground">
-              Last updated: December 23, 2025 | <Link href="/" className="text-primary hover:underline">Back to Home</Link>
+              Last updated: February 28, 2026 | <Link href="/" className="text-primary hover:underline">Back to Home</Link> | <Link href="/features" className="text-primary hover:underline">Features</Link> | <Link href="/chains" className="text-primary hover:underline">Supported Chains</Link> | <Link href="/use-cases" className="text-primary hover:underline">Use Cases</Link>
             </p>
           </footer>
         </article>

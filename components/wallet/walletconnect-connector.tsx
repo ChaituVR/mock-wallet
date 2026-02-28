@@ -17,8 +17,10 @@ import {
   type WCRequest,
   parseWCUri,
 } from "@/lib/walletconnect/wc-manager"
-import { Link2, Unlink, AlertCircle, CheckCircle2, Loader2, ExternalLink, Scan, Settings, Eye, Bot, Camera, X, PlayCircle } from "lucide-react"
+import { Link2, Unlink, AlertCircle, CheckCircle2, Loader2, ExternalLink, Scan, Settings, Eye, Bot, Camera, X, PlayCircle, Download, Copy, Check } from "lucide-react"
+import { toast } from "@/components/ui/use-toast"
 import { SUPPORTED_CHAINS } from "@/lib/wallet/chain-config"
+import { Switch } from "@/components/ui/switch"
 import dynamic from "next/dynamic"
 import { TransactionSimulator, type TransactionData } from "./transaction-simulator"
 import { DataVerifier } from "./data-verifier"
@@ -64,15 +66,80 @@ export function WalletConnectConnector() {
     params: any
     result?: any
   }>>([])
+  const [agentMode, setAgentMode] = useState(false)
+  const [copiedLogId, setCopiedLogId] = useState<string | null>(null)
   const initRef = useRef(false)
   const activeAccountRef = useRef(activeAccount)
   const chainIdRef = useRef(chainId)
+  const agentModeRef = useRef(false)
   const connectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const wcUriFromUrlRef = useRef<string | null>(null)
 
   // Keep refs in sync with state
   useEffect(() => {
     activeAccountRef.current = activeAccount
   }, [activeAccount])
+
+  useEffect(() => {
+    agentModeRef.current = agentMode
+  }, [agentMode])
+
+  // Initialize agent mode from localStorage or URL param
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const urlParams = new URLSearchParams(window.location.search)
+    const urlAgent = urlParams.get("agent")
+    if (urlAgent === "true" || urlAgent === "1") {
+      setAgentMode(true)
+      agentModeRef.current = true
+      localStorage.setItem("mockwallet_agent_mode", "true")
+    } else {
+      const saved = localStorage.getItem("mockwallet_agent_mode")
+      if (saved === "true") {
+        setAgentMode(true)
+        agentModeRef.current = true
+      }
+    }
+    // Read WC URI from URL param for auto-connect
+    const urlWc = urlParams.get("wc")
+    if (urlWc) {
+      wcUriFromUrlRef.current = urlWc.startsWith("wc:") ? urlWc : `wc:${urlWc}`
+    }
+  }, [])
+
+  // Auto-connect WC URI from URL param after initialization is ready
+  useEffect(() => {
+    if (initStatus !== "ready" || !wcUriFromUrlRef.current || !activeAccount) return
+    const uri = wcUriFromUrlRef.current
+    wcUriFromUrlRef.current = null // Only attempt once
+    console.log("[v0] Auto-connecting WC URI from URL param:", uri.substring(0, 20) + "...")
+    handleConnect(uri)
+    // Clean URL after auto-connect for security
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href)
+      url.searchParams.delete("wc")
+      window.history.replaceState({}, "", url.toString())
+    }
+  }, [initStatus, activeAccount])
+
+  const toggleAgentMode = (checked: boolean) => {
+    setAgentMode(checked)
+    agentModeRef.current = checked
+    localStorage.setItem("mockwallet_agent_mode", checked ? "true" : "false")
+  }
+
+  // Listen for agent mode changes from command palette or other components
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "mockwallet_agent_mode") {
+        const newValue = e.newValue === "true"
+        setAgentMode(newValue)
+        agentModeRef.current = newValue
+      }
+    }
+    window.addEventListener("storage", handleStorageChange)
+    return () => window.removeEventListener("storage", handleStorageChange)
+  }, [])
 
   useEffect(() => {
     chainIdRef.current = chainId
@@ -166,8 +233,78 @@ export function WalletConnectConnector() {
     }
   }
 
+  // Auto-approve a WC request (used in Agent Mode)
+  const autoApproveRequest = async (request: WCRequest) => {
+    const account = activeAccountRef.current
+    if (!account || !account.privateKey) return
+
+    const currentChain = SUPPORTED_CHAINS.find((c) => c.chainId === chainIdRef.current)
+    const rpcUrl = currentChain?.rpcUrls.default.http[0] || "https://1rpc.io/sepolia"
+    let result: string
+
+    switch (request.method) {
+      case "personal_sign": {
+        const message = request.params[0]
+        const messageStr = message.startsWith("0x") ? Buffer.from(message.slice(2), "hex").toString("utf8") : message
+        result = await wcManager.signMessage(messageStr, account.privateKey)
+        break
+      }
+      case "eth_sign": {
+        const message = request.params[1]
+        result = await wcManager.signMessage(message, account.privateKey)
+        break
+      }
+      case "eth_signTypedData":
+      case "eth_signTypedData_v3":
+      case "eth_signTypedData_v4": {
+        const typedData = JSON.parse(request.params[1])
+        const { domain, types, message: value } = typedData
+        const { EIP712Domain, ...restTypes } = types
+        result = await wcManager.signTypedData(domain, restTypes, value, account.privateKey)
+        break
+      }
+      case "eth_sendTransaction": {
+        const tx = request.params[0]
+        result = await wcManager.sendTransaction(tx, account.privateKey, rpcUrl)
+        break
+      }
+      default:
+        throw new Error(`Unsupported method: ${request.method}`)
+    }
+
+    await wcManager.respondToRequest(request.id, { result })
+
+    // Update log status
+    setRequestLogs(prev => prev.map(log =>
+      log.id === `${request.id}` ? { ...log, status: "approved" as const, result } : log
+    ))
+  }
+
   const handleSessionProposal = async (proposal: WCProposal) => {
     console.log("[v0] Received session proposal in UI:", proposal)
+
+    // Agent Mode: auto-approve session proposals
+    if (agentModeRef.current && activeAccountRef.current && !activeAccountRef.current.isWatchOnly) {
+      try {
+        console.log("[v0] Agent Mode: auto-approving session proposal")
+        await wcManager.approveSession(proposal, activeAccountRef.current.address, chainIdRef.current)
+        refreshSessions()
+        toast({
+          title: "🤖 Agent Mode: Session Approved",
+          description: `Auto-connected to ${proposal.params.proposer.metadata.name}`,
+          variant: "success",
+        })
+        return
+      } catch (err) {
+        console.error("[v0] Agent Mode auto-approve session error:", err)
+        toast({
+          title: "⚠️ Agent Mode: Session Failed",
+          description: "Falling back to manual approval",
+          variant: "destructive",
+        })
+        // Fall through to manual mode
+      }
+    }
     
     setPendingProposal(proposal)
     setShowSessionDialog(true)
@@ -181,9 +318,31 @@ export function WalletConnectConnector() {
       id: `${request.id}`,
       timestamp: new Date(),
       method: request.method,
-      status: "pending" as const,
+      status: (agentModeRef.current ? "approved" : "pending") as const,
       params: request.params,
     }, ...prev].slice(0, 50)) // Keep last 50 requests
+
+    // Agent Mode: auto-approve signing and transaction requests
+    if (agentModeRef.current && activeAccountRef.current && !activeAccountRef.current.isWatchOnly && activeAccountRef.current.privateKey) {
+      try {
+        console.log("[v0] Agent Mode: auto-approving request:", request.method)
+        await autoApproveRequest(request)
+        toast({
+          title: "🤖 Agent Mode: Request Signed",
+          description: `Auto-approved ${request.method}`,
+          variant: "success",
+        })
+        return
+      } catch (err) {
+        console.error("[v0] Agent Mode auto-approve request error:", err)
+        toast({
+          title: "⚠️ Agent Mode: Request Failed",
+          description: `Failed to auto-approve ${request.method}`,
+          variant: "destructive",
+        })
+        // Fall through to manual mode
+      }
+    }
     
     setPendingRequest(request)
     setShowRequestDialog(true)
@@ -365,6 +524,63 @@ export function WalletConnectConnector() {
     }
   }
 
+  const handleDisconnectAll = async () => {
+    const topics = Object.keys(sessions)
+    for (const topic of topics) {
+      try {
+        await wcManager.disconnectSession(topic)
+      } catch (err) {
+        console.error("[v0] Disconnect error for", topic, err)
+      }
+    }
+    refreshSessions()
+    toast({
+      title: "✓ All Sessions Disconnected",
+      description: `Disconnected ${topics.length} session${topics.length !== 1 ? 's' : ''}`,
+      variant: "success",
+    })
+  }
+
+  const exportLogsAsJson = () => {
+    const data = requestLogs.map(log => ({
+      id: log.id,
+      timestamp: log.timestamp.toISOString(),
+      method: log.method,
+      status: log.status,
+      params: log.params,
+      ...(log.result ? { result: log.result } : {}),
+    }))
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `wc-request-logs-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast({
+      title: "✓ Logs Exported",
+      description: `Exported ${data.length} request log${data.length !== 1 ? 's' : ''} as JSON`,
+      variant: "success",
+    })
+  }
+
+  const copyLogResult = (logId: string, result: string) => {
+    navigator.clipboard.writeText(result)
+    setCopiedLogId(logId)
+    setTimeout(() => setCopiedLogId(null), 2000)
+  }
+
+  const formatSessionDuration = (connectedAt: number): string => {
+    const seconds = Math.floor((Date.now() - connectedAt * 1000) / 1000)
+    if (seconds < 60) return `${seconds}s`
+    const minutes = Math.floor(seconds / 60)
+    if (minutes < 60) return `${minutes}m`
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) return `${hours}h ${minutes % 60}m`
+    const days = Math.floor(hours / 24)
+    return `${days}d ${hours % 24}h`
+  }
+
   const sessionCount = Object.keys(sessions).length
 
   const formatRequestParams = (request: WCRequest) => {
@@ -424,6 +640,43 @@ export function WalletConnectConnector() {
                 WATCH-ONLY MODE: Can connect to dApps but cannot sign transactions or messages
               </AlertDescription>
             </Alert>
+          )}
+
+          {/* Agent Mode Toggle */}
+          {!isWatchOnly && (
+            <div className={`flex items-center justify-between p-3 border-[3px] transition-all ${
+              agentMode 
+                ? 'border-[#00ff00] bg-[#00ff00]/10 shadow-[0_0_15px_rgba(0,255,0,0.15)]' 
+                : 'border-foreground/30 bg-muted/30'
+            }`}>
+              <div className="flex items-center gap-3">
+                <div className={`w-8 h-8 flex items-center justify-center border-2 ${
+                  agentMode ? 'border-[#00ff00] bg-[#00ff00]/20' : 'border-foreground/50 bg-muted'
+                }`}>
+                  <Bot className={`h-4 w-4 ${agentMode ? 'text-[#00ff00] animate-pulse' : 'text-muted-foreground'}`} />
+                </div>
+                <div>
+                  <Label htmlFor="agent-mode" className="font-mono text-xs font-black uppercase cursor-pointer">
+                    Agent Mode
+                  </Label>
+                  <p className="font-mono text-[10px] text-muted-foreground">
+                    {agentMode ? 'AUTO-APPROVING ALL REQUESTS' : 'Auto-approve sessions & requests'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {agentMode && (
+                  <Badge className="bg-[#00ff00] text-black border-none font-mono text-[10px] animate-pulse">
+                    ACTIVE
+                  </Badge>
+                )}
+                <Switch
+                  id="agent-mode"
+                  checked={agentMode}
+                  onCheckedChange={toggleAgentMode}
+                />
+              </div>
+            </div>
           )}
 
           {!projectId ? (
@@ -562,6 +815,11 @@ export function WalletConnectConnector() {
                               <Badge className="text-xs border-2 border-foreground bg-[#00ff00] text-black font-mono">
                                 CONNECTED
                               </Badge>
+                              {session.connectedAt && (
+                                <Badge variant="outline" className="text-[10px] font-mono border-foreground/50">
+                                  {formatSessionDuration(session.connectedAt)}
+                                </Badge>
+                              )}
                               {session.peerMetadata.url && (
                                 <Button
                                   variant="ghost"
@@ -587,6 +845,17 @@ export function WalletConnectConnector() {
                       ))}
                     </div>
                   </ScrollArea>
+                  {sessionCount > 1 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDisconnectAll}
+                      className="w-full mt-2 border-2 border-foreground font-mono uppercase hover:bg-[#ff3333] hover:text-white"
+                    >
+                      <Unlink className="h-3 w-3 mr-2" />
+                      Disconnect All ({sessionCount})
+                    </Button>
+                  )}
                 </div>
               )}
 
@@ -627,6 +896,25 @@ export function WalletConnectConnector() {
                               {log.timestamp.toLocaleTimeString()}
                             </span>
                           </div>
+                          {log.result && (
+                            <div className="flex items-center gap-2 mt-1">
+                              <code className="text-[10px] text-muted-foreground truncate flex-1">
+                                Result: {typeof log.result === 'string' ? `${log.result.slice(0, 30)}...` : 'Object'}
+                              </code>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-5 px-1.5"
+                                onClick={() => copyLogResult(log.id, typeof log.result === 'string' ? log.result : JSON.stringify(log.result))}
+                              >
+                                {copiedLogId === log.id ? (
+                                  <Check className="h-3 w-3 text-[#00ff00]" />
+                                ) : (
+                                  <Copy className="h-3 w-3" />
+                                )}
+                              </Button>
+                            </div>
+                          )}
                           <details className="cursor-pointer">
                             <summary className="text-muted-foreground hover:text-foreground">View details...</summary>
                             <pre className="mt-2 p-2 bg-muted overflow-auto max-h-37.5 text-[10px]">
@@ -637,14 +925,25 @@ export function WalletConnectConnector() {
                       ))}
                     </div>
                   </ScrollArea>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setRequestLogs([])}
-                    className="w-full border-2 border-foreground font-mono uppercase"
-                  >
-                    Clear History
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={exportLogsAsJson}
+                      className="flex-1 border-2 border-foreground font-mono uppercase"
+                    >
+                      <Download className="h-3 w-3 mr-1" />
+                      Export JSON
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setRequestLogs([])}
+                      className="flex-1 border-2 border-foreground font-mono uppercase"
+                    >
+                      Clear History
+                    </Button>
+                  </div>
                 </div>
               )}
             </>

@@ -114,6 +114,23 @@ const featureContent: Record<string, {
       { step: 4, title: "Ready to Test", description: "Start testing immediately" },
     ],
   },
+  "agent-mode": {
+    benefits: [
+      "Automatically approve all WalletConnect session proposals",
+      "Auto-sign messages and transactions without manual interaction",
+      "Essential for CI/CD pipelines and E2E testing (Cypress, Playwright)",
+      "Enable via UI toggle, command palette (Cmd/Ctrl+K), or URL parameter (?agent=true)",
+      "Combine with ?wc=URI for fully automated dApp connections",
+      "Persisted across sessions via localStorage",
+      "Falls back to manual mode on any error",
+    ],
+    howItWorks: [
+      { step: 1, title: "Enable Agent Mode", description: "Toggle via WalletConnect panel, command palette (Cmd/Ctrl+K → 'Agent Mode'), or add ?agent=true to URL" },
+      { step: 2, title: "Connect dApp", description: "Pair with your dApp as usual — or use ?wc=URI for auto-connect. Proposals are auto-approved." },
+      { step: 3, title: "Auto-Sign", description: "All signing and transaction requests are approved automatically with toast notifications" },
+      { step: 4, title: "Review & Export", description: "Check request history, copy results, and export logs as JSON" },
+    ],
+  },
 }
 
 export default async function FeaturePage({ params }: Props) {

@@ -32,6 +32,7 @@ interface WalletContextType {
   switchAccount: (index: number) => Promise<void>
   reorderAccounts: (newOrder: WalletAccount[]) => void
   updateAccountLabel: (index: number, label: string, color: string) => void
+  removeAccount: (index: number) => void
   disconnectWallet: () => void
   switchChain: (chainId: number) => Promise<void>
   setProjectId: (id: string) => void
@@ -373,6 +374,30 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
     }
   }
 
+  const removeAccount = (index: number) => {
+    if (accounts.length <= 1) {
+      WalletManager.clearAllAccounts()
+      setAccounts([])
+      setActiveAccountIndex(0)
+      setBalance("0.0")
+      return
+    }
+
+    const newAccounts = accounts.filter((_, i) => i !== index)
+    WalletManager.saveAccounts(newAccounts)
+
+    let newActiveIndex = activeAccountIndex
+    if (index === activeAccountIndex) {
+      newActiveIndex = activeAccountIndex >= newAccounts.length ? newAccounts.length - 1 : activeAccountIndex
+    } else if (index < activeAccountIndex) {
+      newActiveIndex = activeAccountIndex - 1
+    }
+
+    WalletManager.setActiveAccountIndex(newActiveIndex)
+    setAccounts(newAccounts)
+    setActiveAccountIndex(newActiveIndex)
+  }
+
   const disconnectWallet = () => {
     if (accounts.length <= 1) {
       // If only one account, clear all
@@ -553,6 +578,7 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
         switchAccount,
         reorderAccounts,
         updateAccountLabel,
+        removeAccount,
         disconnectWallet,
         switchChain,
         setProjectId,

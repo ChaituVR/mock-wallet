@@ -20,6 +20,7 @@ import {
   Command,
   ArrowRight,
   MessageSquarePlus,
+  Bot,
 } from "lucide-react"
 import { useWallet } from "@/lib/wallet/wallet-provider"
 import { SUPPORTED_CHAINS, getChainById } from "@/lib/wallet/chain-config"
@@ -235,6 +236,30 @@ export function CommandPalette() {
           setOpen(false)
         },
         category: "navigation",
+      },
+      {
+        id: "agent-mode",
+        label: "Toggle Agent Mode",
+        description: "Auto-approve all WalletConnect requests",
+        icon: Bot,
+        keywords: ["agent", "mode", "auto", "approve", "bot", "automated", "testing"],
+        action: () => {
+          const current = localStorage.getItem("mockwallet_agent_mode") === "true"
+          const next = !current
+          localStorage.setItem("mockwallet_agent_mode", next ? "true" : "false")
+          // Dispatch storage event so the WC connector picks up the change
+          window.dispatchEvent(new StorageEvent("storage", {
+            key: "mockwallet_agent_mode",
+            newValue: next ? "true" : "false",
+          }))
+          toast({
+            title: next ? "🤖 Agent Mode Enabled" : "Agent Mode Disabled",
+            description: next ? "All WalletConnect requests will be auto-approved" : "Manual approval restored",
+            variant: next ? "success" : "default",
+          })
+          setOpen(false)
+        },
+        category: "action",
       },
     ]
 

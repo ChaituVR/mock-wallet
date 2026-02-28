@@ -211,6 +211,14 @@ export function WalletSetup() {
                       <code className="text-primary font-bold">?projectId=YOUR_ID</code>
                       <p className="mt-1 font-bold">Set Reown project ID</p>
                     </div>
+                    <div className="p-2 bg-background border border-black">
+                      <code className="text-primary font-bold">?agent=true</code>
+                      <p className="mt-1 font-bold">Enable Agent Mode (auto-approve)</p>
+                    </div>
+                    <div className="p-2 bg-background border border-black">
+                      <code className="text-primary font-bold">?wc=wc:abc123...</code>
+                      <p className="mt-1 font-bold">Auto-connect WalletConnect URI</p>
+                    </div>
                   </div>
                 </div>
 
@@ -218,7 +226,7 @@ export function WalletSetup() {
                   <p className="text-xs font-mono font-bold">
                     <span className="text-primary">Example:</span>
                     <br />
-                    <code className="break-all">{currentDomain}?pk=0x...&chainId=11155111</code>
+                    <code className="break-all">{currentDomain}?pk=0x...&chainId=11155111&agent=true&wc=wc:...</code>
                   </p>
                 </div>
               </CardContent>

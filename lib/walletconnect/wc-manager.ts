@@ -567,13 +567,15 @@ export class WalletConnectManager {
 
   // Emit accountsChanged event to all connected sessions
   async emitAccountsChanged(accounts: string[]): Promise<void> {
+    if (!this.walletKit) return
+
     const sessions = this.getActiveSessions()
     
     for (const [topic, session] of Object.entries(sessions)) {
       try {
-        const chainId = `eip155:${session.requiredNamespaces?.eip155?.chains?.[0]?.split(':')[1] || '1'}`
+        const chainId = `eip155:${session.namespaces?.eip155?.chains?.[0]?.split(':')[1] || '1'}`
         
-        await this.web3wallet.emitSessionEvent({
+        await this.walletKit.emitSessionEvent({
           topic,
           event: {
             name: 'accountsChanged',
@@ -591,13 +593,15 @@ export class WalletConnectManager {
 
   // Emit chainChanged event to all connected sessions
   async emitChainChanged(chainId: number): Promise<void> {
+    if (!this.walletKit) return
+
     const sessions = this.getActiveSessions()
     
     for (const [topic, session] of Object.entries(sessions)) {
       try {
         const chainIdStr = `eip155:${chainId}`
         
-        await this.web3wallet.emitSessionEvent({
+        await this.walletKit.emitSessionEvent({
           topic,
           event: {
             name: 'chainChanged',

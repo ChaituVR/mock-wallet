@@ -44,6 +44,17 @@ Mock Wallet is a professional Web3 development wallet designed for blockchain de
 - Session management and persistence
 - Request handling: sign transactions, sign messages, sign typed data (EIP-712)
 - Multi-session support
+- **Agent Mode (Auto-Approve)**: Automatically approve all session proposals and signing requests
+- **WC URI Auto-Connect**: Pass `?wc=URI` to automatically pair with a dApp via URL parameter
+- **Request Log Export**: Export WalletConnect request history as JSON for debugging
+- **Disconnect All Sessions**: Bulk disconnect all active WalletConnect sessions
+- **Session Duration Display**: Track how long each WalletConnect session has been connected
+- **Toast Notifications**: Real-time visual feedback for Agent Mode auto-approvals
+  - Enable via UI toggle switch in WalletConnect panel
+  - Enable via URL parameter: `?agent=true`
+  - Persisted in localStorage for continuity
+  - Essential for CI/CD pipelines, E2E testing (Cypress, Playwright), and automated workflows
+  - Falls back to manual mode on error
 
 ### 3. Watch-Only Mode & Address Impersonation
 - Monitor any Ethereum address without private key access
@@ -70,6 +81,7 @@ Supported networks:
 - Real-time balance updates
 - Faucet integration for test tokens
 - URL-based wallet import for CI/CD testing
+- Agent Mode for automated request approval (`?agent=true`)
 - Transaction Simulator for previewing outcomes
 
 ### 6. Transaction Simulator
@@ -81,7 +93,7 @@ Supported networks:
 - Balance change predictions
 - Smart contract function decoding
 
-### 6. Security & Safety
+### 7. Security & Safety
 ⚠️ **IMPORTANT**: Mock Wallet is designed ONLY for testing and development purposes.
 - Never use with real funds or mainnet private keys
 - Private keys stored in browser localStorage (not production-safe)
@@ -260,9 +272,9 @@ ethers.js, WalletConnect v2, Reown, EIP-712, BIP-39, BIP-44, EVM-compatible, JSO
 
 ## Version Information
 
-- **llms.txt Version**: 1.0
-- **Last Updated**: December 23, 2025
-- **Next Review**: March 23, 2026
+- **llms.txt Version**: 1.1
+- **Last Updated**: February 28, 2026
+- **Next Review**: May 28, 2026
 - **Maintained By**: Mock Wallet Team
 
 ---
